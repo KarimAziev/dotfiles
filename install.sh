@@ -160,6 +160,16 @@ esac
 read -p "Remap capslock to ctrl (y/n)? " answer
 case ${answer:0:1} in
     y|Y )
+        filename="/etc/default/keyboard"
+
+        if grep XKBOPTIONS= $filename ;
+        then
+            search=$(grep XKBOPTIONS= $filename)
+            replace=XKBOPTIONS="\"ctrl:nocaps\""
+            sudo sed -i "s/$search/$replace/" $filename
+        else
+            echo XKBOPTIONS="ctrl:nocaps" >> $filename
+        fi
         setxkbmap -option 'caps:ctrl_modifier,grp:toggle'
         sudo dpkg-reconfigure keyboard-configuration
         ;;
@@ -190,6 +200,7 @@ read -p "Install nvm (y/n)? " answer
 case ${answer:0:1} in
     y|Y )
         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+        source $HOME/.bashrc
         nvm install node
         npm i -g standard-version yarn emacs-jsdom-run eslint_d tsc prettier
         ;;
