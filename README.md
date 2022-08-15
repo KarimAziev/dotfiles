@@ -1,7 +1,6 @@
 # Bootstrap Ubuntu 22.04
 
-This dotfiles repository is currently aimed for Ubuntu 22.04. It
-includes:
+This dotfiles repository is currently aimed for Ubuntu 22.04.
 
 Installation script do following:
 
@@ -52,4 +51,4 @@ You can use the convenience script to install the dotfiles on any
 machine with a single command. Simply run the following command in your
 terminal:
 
-    sh -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/dotfiles/main/install.sh)"
+    sudo wget -qO- https://raw.githubusercontent.com/KarimAziev/dotfiles/main/install.sh | bash
