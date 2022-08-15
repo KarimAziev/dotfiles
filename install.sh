@@ -98,6 +98,7 @@ case ${answer:0:1} in
         ;;
 esac
 
+cd $HOME
 
 if !(installed flacon); then
     sudo add-apt-repository -y ppa:flacon/ppa
@@ -145,7 +146,7 @@ fi
 
 # keyboard setup
 
-read -p "Set emacs key key theme (y/n)? " answer
+read -p "Set emacs key theme (y/n)? " answer
 case ${answer:0:1} in
     y|Y )
         gsettings set org.gnome.desktop.interface gtk-key-theme "Emacs"
@@ -173,24 +174,14 @@ read -p "Install google chrome (y/n)? " answer
 case ${answer:0:1} in
     y|Y )
         wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        sudo dpkg -i google-chrome-stable_current_amd64.deb
         ;;
     * )
-        echo "Nvm is not installed"
+        echo "google chrome is not installed"
         ;;
 esac
 
-if !(installed google-chrome-stable); then
-    read -p "Install chrome-session-dump (y/n)? " answer
-
-    case ${answer:0:1} in
-        y|Y )
-            sudo curl -o /usr/bin/chrome-session-dump -L 'https://github.com/lemnos/chrome-session-dump/releases/download/v0.0.2/chrome-session-dump-linux' && sudo chmod 755 /usr/bin/chrome-session-dump
-            ;;
-        * )
-            echo "chrome-session-dump is not installed"
-            ;;
-    esac
-fi
+sudo curl -o /usr/bin/chrome-session-dump -L 'https://github.com/lemnos/chrome-session-dump/releases/download/v0.0.2/chrome-session-dump-linux' && sudo chmod 755 /usr/bin/chrome-session-dump
 
 # Nvm, node, npm, yarn etc
 
