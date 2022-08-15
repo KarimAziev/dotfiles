@@ -51,4 +51,4 @@ You can use the convenience script to install the dotfiles on any
 machine with a single command. Simply run the following command in your
 terminal:
 
-    sudo wget -qO- https://raw.githubusercontent.com/KarimAziev/dotfiles/main/install.sh | bash
+    bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/dotfiles/main/install.sh)"
