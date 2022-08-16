@@ -61,10 +61,18 @@ fi
 
 cd $HOME/emacs
 
-echo $PWD
-echo "PULLING EMACS"
+read -p "Pull emacs repo (y/n)? " answer
+case ${answer:0:1} in
+    y|Y )
+        echo $PWD
+        echo "PULLING EMACS"
 
-git pull origin $(git rev-parse --abbrev-ref HEAD)
+        git pull origin $(git rev-parse --abbrev-ref HEAD)
+        ;;
+    * )
+        echo "emacs is not installed"
+        ;;
+esac
 
 read -p "Configure emacs (y/n)? " answer
 
@@ -143,6 +151,18 @@ if !(installed gh); then
     sudo apt update
     sudo apt install gh
 fi
+
+read -p "Install deps for mu4e (y/n)? " answer
+case ${answer:0:1} in
+    y|Y )
+        sudo apt install meson gir1.2-glib-2.0
+        sudo apt-get install gmime-3.0 libxapian-dev libxapian30 guile-3.0 xapian-omega xapian-tools
+        ;;
+    * )
+        echo "Dependencies for mu4e is not installed"
+        ;;
+esac
+
 
 # keyboard setup
 
