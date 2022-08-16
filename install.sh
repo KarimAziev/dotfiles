@@ -165,12 +165,12 @@ case ${answer:0:1} in
         if grep XKBOPTIONS= $filename ;
         then
             search=$(grep XKBOPTIONS= $filename)
-            replace=XKBOPTIONS="\"ctrl:nocaps\""
+            replace=XKBOPTIONS="\"ctrl:nocaps,grp:toggle\""
             sudo sed -i "s/$search/$replace/" $filename
         else
-            echo XKBOPTIONS="ctrl:nocaps" >> $filename
+            echo XKBOPTIONS="\"ctrl:nocaps,grp:toggle\"" >> $filename
         fi
-        setxkbmap -option 'caps:ctrl_modifier,grp:toggle'
+        setxkbmap -option 'ctrl:nocaps,grp:toggle'
         sudo dpkg-reconfigure keyboard-configuration
         ;;
     * )
@@ -191,7 +191,16 @@ case ${answer:0:1} in
         ;;
 esac
 
-sudo curl -o /usr/bin/chrome-session-dump -L 'https://github.com/lemnos/chrome-session-dump/releases/download/v0.0.2/chrome-session-dump-linux' && sudo chmod 755 /usr/bin/chrome-session-dump
+read -p "Install chrome session dump (y/n)? " answer
+
+case ${answer:0:1} in
+    y|Y )
+        sudo curl -o /usr/bin/chrome-session-dump -L 'https://github.com/lemnos/chrome-session-dump/releases/download/v0.0.2/chrome-session-dump-linux' && sudo chmod 755 /usr/bin/chrome-session-dump
+        ;;
+    * )
+        echo "chrome session is not installed"
+        ;;
+esac
 
 # Nvm, node, npm, yarn etc
 
@@ -200,8 +209,7 @@ read -p "Install nvm (y/n)? " answer
 case ${answer:0:1} in
     y|Y )
         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
-        source $HOME/.bashrc
-        nvm install node
+        source $HOME/.bashrc && nvm install node
         npm i -g standard-version yarn emacs-jsdom-run eslint_d tsc prettier
         ;;
     * )
