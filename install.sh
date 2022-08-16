@@ -33,7 +33,7 @@ pkgs=(fd-find pandoc viewnior vlc heif-gdk-pixbuf youtube-dl hunspell w3m mpv cm
       curl wget net-tools build-essential autoconf make gcc libgnutls28-dev libtiff5-dev
       libgif-dev libjpeg-dev libpng-dev libxpm-dev libncurses-dev texinfo libjansson4 libjansson-dev
       libgccjit0 libgccjit-10-dev gcc-10 g++-10
-      libgtk-3-dev libwebkit2gtk-4.0-dev gnutls-bin
+      libgtk-3-dev libwebkit2gtk-4.0-dev gnutls-bin libacl1-dev libotf-dev libxft-dev libsystemd-dev
       libncurses5-dev libharfbuzz-dev imagemagick libmagickwand-dev xaw3dg-dev libx11-dev)
 missing_pkgs=""
 
