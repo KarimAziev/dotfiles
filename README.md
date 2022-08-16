@@ -37,14 +37,6 @@ Installation script do following:
       - Remap capslock to ctrl
       - Set Emacs gtk keyboard theme
 
-## Pre Requirements
-
-Open `Software & Updates` and ensure the Source Code source is enabled
-and reload the package list (or run `sudo apt update` in a terminal
-after adding Source Code).
-
-![](./example.png)
-
 ## Usage
 
 You can use the convenience script to install the dotfiles on any
