@@ -4,6 +4,7 @@ function installed() {
     return $(dpkg-query -W -f '${Status}\n' "${1}" 2>&1|awk '/ok installed/{print 0;exit}{print 1}')
 }
 
+
 read -p "Update git (y/n)? " answer
 
 case ${answer:0:1} in
@@ -32,9 +33,10 @@ esac
 pkgs=(fd-find pandoc viewnior vlc heif-gdk-pixbuf youtube-dl hunspell w3m mpv cmake libtool libtool-bin
       curl wget net-tools build-essential autoconf make gcc libgnutls28-dev libtiff5-dev
       libgif-dev libjpeg-dev libpng-dev libxpm-dev libncurses-dev texinfo libjansson4 libjansson-dev
-      libgccjit0 libgccjit-10-dev gcc-10 g++-10 sqlite3
+      libgccjit0 libgccjit-10-dev gcc-10 g++-10 sqlite3 libconfig-dev
       libgtk-3-dev libwebkit2gtk-4.0-dev gnutls-bin libacl1-dev libotf-dev libxft-dev libsystemd-dev
-      libncurses5-dev libharfbuzz-dev imagemagick libmagickwand-dev xaw3dg-dev libx11-dev)
+      libncurses5-dev libharfbuzz-dev imagemagick libmagickwand-dev xaw3dg-dev libx11-dev
+      ditaa libtree-sitter-dev)
 missing_pkgs=""
 
 for pkg in ${pkgs[@]}; do
@@ -51,7 +53,6 @@ if [ ! -z "$missing_pkgs" ]; then
 fi
 
 
-
 if [ ! -d $HOME/emacs ];
 then
     echo "Cloning emacs"
@@ -64,9 +65,6 @@ cd $HOME/emacs
 read -p "Pull emacs repo (y/n)? " answer
 case ${answer:0:1} in
     y|Y )
-        echo $PWD
-        echo "PULLING EMACS"
-
         git pull origin $(git rev-parse --abbrev-ref HEAD)
         ;;
     * )
@@ -78,15 +76,17 @@ read -p "Configure emacs (y/n)? " answer
 
 case ${answer:0:1} in
     y|Y )
-        export CC=/usr/bin/gcc-10 CXX=/usr/bin/gcc-10
+
+        sudo make distclean
+        # export CC=/usr/bin/gcc-10 CXX=/usr/bin/gcc-10
 
         ./autogen.sh
 
         echo $CC
         echo "Configuring emacs"
         ./configure --with-native-compilation --with-json --with-pgtk --with-xwidgets --with-cairo --with-gif --with-png --with-jpeg \
-                    --with-gnutls --with-mailutils --with-threads --with-included-regex --with-harfbuzz --with-tiff --with-xpm \
-                    --with-zlib --with-xft --with-xml2
+                    --with-gnutls --with-modules --with-mailutils --with-threads --with-included-regex --with-harfbuzz --with-tiff --with-xpm \
+                    --with-zlib --with-xft --with-xml2 --with-x-toolkit=gtk3
         ;;
     * )
         echo "Finished"
@@ -99,10 +99,20 @@ read -p "Compile emacs (y/n)? " answer
 case ${answer:0:1} in
     y|Y )
         make -j$(nproc)
-        sudo make install
         ;;
     * )
         echo "Emacs is not compiled"
+        ;;
+esac
+
+read -p "Install emacs (y/n)? " answer
+
+case ${answer:0:1} in
+    y|Y )
+        make -j$(nproc)
+        ;;
+    * )
+        echo "Emacs is not installed"
         ;;
 esac
 
@@ -230,7 +240,7 @@ case ${answer:0:1} in
     y|Y )
         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
         source $HOME/.bashrc && nvm install node
-        npm i -g standard-version yarn emacs-jsdom-run eslint_d tsc prettier
+        npm i -g standard-version yarn emacs-jsdom-run eslint_d tsc prettier vscode-json-languageserver bash-language-server
         ;;
     * )
         echo "Nvm is not installed"
