@@ -1,11 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-function installed() {
-    return $(dpkg-query -W -f '${Status}\n' "${1}" 2>&1|awk '/ok installed/{print 0;exit}{print 1}')
-}
+DOTFILES_ROOT=$HOME/dotfiles
+DOTFILES_REPO=https://github.com/KarimAziev/dotfiles
+EMACS_DIRECTORY="$HOME/emacs"
 
-
-read -p "Update git (y/n)? " answer
+read -rp "Update git (y/n)? " answer
 
 case ${answer:0:1} in
     y|Y )
@@ -19,129 +18,75 @@ case ${answer:0:1} in
         ;;
 esac
 
-read -p "Autoremove emacs (y/n)? " answer
 
-case ${answer:0:1} in
-    y|Y )
-        sudo apt remove --autoremove emacs emacs-common
-        ;;
-    * )
-        echo "Not removing emacs and emacs-common"
-        ;;
-esac
-
-pkgs=(fd-find pandoc viewnior vlc heif-gdk-pixbuf youtube-dl hunspell w3m mpv cmake libtool libtool-bin
-      curl wget net-tools build-essential autoconf make gcc libgnutls28-dev libtiff5-dev
-      libgif-dev libjpeg-dev libpng-dev libxpm-dev libncurses-dev texinfo libjansson4 libjansson-dev
-      libgccjit0 libgccjit-10-dev gcc-10 g++-10 sqlite3 libconfig-dev
-      libgtk-3-dev libwebkit2gtk-4.0-dev gnutls-bin libacl1-dev libotf-dev libxft-dev libsystemd-dev
-      libncurses5-dev libharfbuzz-dev imagemagick libmagickwand-dev xaw3dg-dev libx11-dev
-      ditaa libtree-sitter-dev)
-missing_pkgs=""
-
-for pkg in ${pkgs[@]}; do
-    if ! $(installed $pkg) ; then
-        missing_pkgs+=" $pkg"
-    fi
-done
-
-
-
-if [ ! -z "$missing_pkgs" ]; then
-    echo $missing_pkgs
-    sudo apt install -y $missing_pkgs
-fi
-
-
-if [ ! -d $HOME/emacs ];
+if [ -d "$DOTFILES_ROOT" ];
 then
-    echo "Cloning emacs"
-    git clone --depth 1 https://git.savannah.gnu.org/git/emacs.git $HOME/emacs
-    cd $HOME/emacs
+    cd "$DOTFILES_ROOT"
+    git pull origin main
+else
+    git clone $DOTFILES_REPO "$DOTFILES_ROOT"
+    cd "$DOTFILES_ROOT"
 fi
 
-cd $HOME/emacs
+cd "$DOTFILES_ROOT" || exit
 
-read -p "Pull emacs repo (y/n)? " answer
-case ${answer:0:1} in
-    y|Y )
-        git pull origin $(git rev-parse --abbrev-ref HEAD)
-        ;;
-    * )
-        echo "emacs is not installed"
-        ;;
-esac
-
-read -p "Configure emacs (y/n)? " answer
-
-case ${answer:0:1} in
-    y|Y )
-
-        sudo make distclean
-        # export CC=/usr/bin/gcc-10 CXX=/usr/bin/gcc-10
-
-        ./autogen.sh
-
-        echo $CC
-        echo "Configuring emacs"
-        ./configure --with-native-compilation --with-json --with-pgtk --with-xwidgets --with-cairo --with-gif --with-png --with-jpeg \
-                    --with-gnutls --with-modules --with-mailutils --with-threads --with-included-regex --with-harfbuzz --with-tiff --with-xpm \
-                    --with-zlib --with-xft --with-xml2 --with-x-toolkit=gtk3
-        ;;
-    * )
-        echo "Finished"
-        ;;
-esac
+source ./installed.sh
+source ./apt-init.sh
+source ./build-emacs.sh
 
 
-read -p "Compile emacs (y/n)? " answer
+compile-emacs() {
+    read -rp "Configure emacs (y/n)? " answer
+    case ${answer:0:1} in
+        y|Y )
+            install-emacs-deps
+            compile-emacs
+            build-emacs
+            ;;
+        * )
+            echo "Emacs is no configured"
+            ;;
+    esac
 
-case ${answer:0:1} in
-    y|Y )
-        make -j$(nproc)
-        ;;
-    * )
-        echo "Emacs is not compiled"
-        ;;
-esac
+    case ${answer:0:1} in
+        y|Y )
+            install-emacs
+            ;;
+        * )
+            echo "Emacs is not installed"
+            ;;
+    esac
+}
 
-read -p "Install emacs (y/n)? " answer
+cd "$HOME"
 
-case ${answer:0:1} in
-    y|Y )
-        make -j$(nproc)
-        ;;
-    * )
-        echo "Emacs is not installed"
-        ;;
-esac
+compile-emacs
 
-cd $HOME
+cd "$HOME"
 
-if !(installed flacon); then
-    sudo add-apt-repository -y ppa:flacon/ppa
+if ! (installed flacon); then
     sudo apt-get update && sudo apt-get install -y flacon
 fi
-if !(installed silversearcher-ag); then
+if ! (installed silversearcher-ag); then
     sudo apt-get install -y silversearcher-ag
 fi
 
-if !(installed dconf-editor); then
+if ! (installed dconf-editor); then
     sudo apt-get -y install dconf-editor
 fi
 
-if !(installed avidemux-cli); then
+if ! (installed avidemux-cli); then
     sudo apt install software-properties-common apt-transport-https -y
     sudo add-apt-repository ppa:xtradeb/apps -y
     sudo apt install avidemux* -y
 fi
 
 # pass and extensions
-if !(installed pass); then
+if ! (installed pass); then
     sudo apt-get install -y pass
 fi
 
-if !(installed pass-extension-import); then
+if ! (installed pass-extension-import); then
     sudo apt install software-properties-common
     sudo add-apt-repository ppa:deadsnakes/ppa
     sudo apt install python3.9
@@ -154,7 +99,7 @@ fi
 
 
 # gh
-if !(installed gh); then
+if ! (installed gh); then
     curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
     sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
@@ -162,7 +107,7 @@ if !(installed gh); then
     sudo apt install gh
 fi
 
-read -p "Install deps for mu4e (y/n)? " answer
+read -rp "Install deps for mu4e (y/n)? " answer
 case ${answer:0:1} in
     y|Y )
         sudo apt install meson gir1.2-glib-2.0
@@ -176,7 +121,7 @@ esac
 
 # keyboard setup
 
-read -p "Set emacs key theme (y/n)? " answer
+read -rp "Set emacs key theme (y/n)? " answer
 case ${answer:0:1} in
     y|Y )
         gsettings set org.gnome.desktop.interface gtk-key-theme "Emacs"
@@ -187,21 +132,10 @@ case ${answer:0:1} in
 esac
 
 
-read -p "Remap capslock to ctrl (y/n)? " answer
+read -rp "Remap capslock to ctrl (y/n)? " answer
 case ${answer:0:1} in
     y|Y )
-        filename="/etc/default/keyboard"
-
-        if grep XKBOPTIONS= $filename ;
-        then
-            search=$(grep XKBOPTIONS= $filename)
-            replace=XKBOPTIONS="\"ctrl:nocaps,grp:toggle\""
-            sudo sed -i "s/$search/$replace/" $filename
-        else
-            echo XKBOPTIONS="\"ctrl:nocaps,grp:toggle\"" >> $filename
-        fi
-        setxkbmap -option 'ctrl:nocaps,grp:toggle'
-        sudo dpkg-reconfigure keyboard-configuration
+        source ./remap-caps.sh
         ;;
     * )
         echo "Not remapping"
@@ -209,7 +143,7 @@ case ${answer:0:1} in
 esac
 
 # google chrome
-read -p "Install google chrome (y/n)? " answer
+read -rp "Install google chrome (y/n)? " answer
 
 case ${answer:0:1} in
     y|Y )
@@ -221,7 +155,7 @@ case ${answer:0:1} in
         ;;
 esac
 
-read -p "Install chrome session dump (y/n)? " answer
+read -rp "Install chrome session dump (y/n)? " answer
 
 case ${answer:0:1} in
     y|Y )
@@ -234,15 +168,13 @@ esac
 
 # Nvm, node, npm, yarn etc
 
-read -p "Install nvm (y/n)? " answer
+read -rp "Install nvm (y/n)? " answer
 
 case ${answer:0:1} in
     y|Y )
-        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
-        source $HOME/.bashrc && nvm install node
-        npm i -g standard-version yarn emacs-jsdom-run eslint_d tsc prettier vscode-json-languageserver bash-language-server
+        source ./install-nvm.sh
         ;;
     * )
-        echo "Nvm is not installed"
+        echo "Not installing NVM"
         ;;
 esac
