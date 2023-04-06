@@ -9,7 +9,7 @@ if [ -z "$DOTFILES_ROOT" ]; then
 fi
 
 
-cd DOTFILES_ROOT || exit
+cd $DOTFILES_ROOT || exit
 set -o errexit
 set -o pipefail
 
