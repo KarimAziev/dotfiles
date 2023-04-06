@@ -122,24 +122,26 @@ build-emacs-interactive () {
     read -rp "Compile emacs (y/n)? " answer
     case ${answer:0:1} in
         y|Y )
-            install-emacs-deps;
-            kill-emacs;
-            update-emacs;
-            build-emacs;
-            read -rp "Install emacs (y/n)? " ans
-            case ${ans:0:1} in
-                y|Y )
-                    cd "$EMACS_DIRECTORY" || exit
-                    sudo make install
-                    ;;
-                * )
-                    echo "Skipping installing"
-                    ;;
-            esac
+            install-emacs-deps
+            kill-emacs
+            update-emacs
+            build-emacs
             ;;
         * )
             echo "Emacs is not configured"
             ;;
     esac
+        read -rp "Install emacs (y/n)? " answer
+
+     case ${answer:0:1} in
+        y|Y )
+            kill-emacs
+            install-emacs
+            ;;
+        * )
+            echo "Skipping installing"
+            ;;
+    esac
 }
 
+build-emacs-interactive
