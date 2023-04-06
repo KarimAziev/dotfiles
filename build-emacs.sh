@@ -68,7 +68,7 @@ install-emacs-deps() {
 kill-emacs () {
     if pgrep emacs >/dev/null ; then
         echo "Emacs is running."
-        read -pr "Do you want to kill Emacs? [y/n] " answer
+        read -r "Do you want to kill Emacs? [y/n] " answer
         case ${answer:0:1} in
             y|Y )
                 echo "Killing Emacs..."
