@@ -1,9 +1,50 @@
 #!/usr/bin/env bash
 
-DOTFILES_ROOT=$HOME/dotfiles
-DOTFILES_REPO=https://github.com/KarimAziev/dotfiles
-EMACS_DIRECTORY="$HOME/emacs"
 
+function script-init()
+{
+    set -e
+
+
+    if [ -z "$DOTFILES_ROOT" ]; then
+        DOTFILES_ROOT=$HOME/dotfiles
+    fi
+
+    if [ -z "$DOTFILES_REPO" ]; then
+        DOTFILES_REPO=https://github.com/KarimAziev/dotfiles
+    fi
+}
+
+function dotfiles-init()
+{
+    cd "$DOTFILES_ROOT"
+    source "$DOTFILES_ROOT"/installed.sh
+    source "$DOTFILES_ROOT"/apt-init.sh
+}
+
+
+function dotfiles-download()
+{
+    if ! (which git); then
+        sudo add-apt-repository ppa:git-core/ppa
+        sudo apt update
+        sudo apt-get install -y git
+        git config --global init.defaultBranch main
+    fi
+    if [ -d "$DOTFILES_ROOT" ]; then
+        cd "$DOTFILES_ROOT"
+    else
+        git clone $DOTFILES_REPO "$DOTFILES_ROOT"
+        cd "$DOTFILES_ROOT"
+    fi
+}
+
+script-init
+dotfiles-download
+dotfiles-init
+
+
+set -e
 read -rp "Update git (y/n)? " answer
 
 case ${answer:0:1} in
@@ -19,48 +60,13 @@ case ${answer:0:1} in
 esac
 
 
-if [ -d "$DOTFILES_ROOT" ];
-then
-    cd "$DOTFILES_ROOT"
-    git pull origin main
-else
-    git clone $DOTFILES_REPO "$DOTFILES_ROOT"
-    cd "$DOTFILES_ROOT"
-fi
 
 cd "$DOTFILES_ROOT" || exit
-
-source ./installed.sh
-source ./apt-init.sh
-source ./build-emacs.sh
-
-
-compile-emacs() {
-    read -rp "Configure emacs (y/n)? " answer
-    case ${answer:0:1} in
-        y|Y )
-            install-emacs-deps
-            compile-emacs
-            build-emacs
-            ;;
-        * )
-            echo "Emacs is no configured"
-            ;;
-    esac
-
-    case ${answer:0:1} in
-        y|Y )
-            install-emacs
-            ;;
-        * )
-            echo "Emacs is not installed"
-            ;;
-    esac
-}
+source "$DOTFILES_ROOT/build-emacs.sh"
 
 cd "$HOME"
 
-compile-emacs
+build-emacs-interactive
 
 cd "$HOME"
 
@@ -178,3 +184,4 @@ case ${answer:0:1} in
         echo "Not installing NVM"
         ;;
 esac
+

@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+
+sudo apt update
+sudo apt-get update
+
 source ./installed.sh
 
 while read -r repo; do
@@ -14,5 +18,3 @@ while read -r pkg; do
     fi
 done < ./pkgs.txt
 
-sudo apt update
-sudo apt-get update
