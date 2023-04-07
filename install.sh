@@ -66,8 +66,6 @@ source "$DOTFILES_ROOT/build-emacs.sh"
 
 cd "$HOME"
 
-build-emacs-interactive
-
 cd "$HOME"
 
 if ! (installed flacon); then
