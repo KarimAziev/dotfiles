@@ -1,31 +1,85 @@
 #!/usr/bin/env bash
 
-EMACS_DIRECTORY="$HOME/emacs"
-
-
-
 if [ -z "$DOTFILES_ROOT" ]; then
     DOTFILES_ROOT=$HOME/dotfiles
 fi
 
-
-cd $DOTFILES_ROOT || exit
-set -o errexit
 set -o pipefail
 
+usage() {
+    cat << EOF
+usage: $0 [OPTIONS]...
 
-installed() {
-    return "$(dpkg-query -W -f '${Status}\n' "${1}" 2>&1|awk '/ok installed/{print 0;exit}{print 1}')"
+Update, compile and install latest emacs.
+
+Arguments:
+  -s skip (install-emacs-deps|build-emacs|kill-emacs|pull-emacs|install-emacs)
+
+OPTIONS:
+  -h    Show this message
+  -p    Source directory for emacs repository (default is $HOME/emacs)
+  -y    Automatic yes (default no)
+EOF
 }
+
+SKIP_PROMPT="false"
+EMACS_DIRECTORY="$HOME/emacs"
+
+steps=(install-emacs-deps
+       kill-emacs
+       remove-emacs
+       pull-emacs
+       build-emacs
+       install-emacs
+       copy-emacs-icon)
+
+skipsteps=()
+
+
+while getopts ":hs:fp:ry:R" OPTION ; do
+    case $OPTION in
+        h)  usage
+            exit 0
+            ;;
+        p)  EMACS_DIRECTORY=$(readlink -f $OPTARG)
+            ;;
+        y)  SKIP_PROMPT="yes"
+            ;;
+        s)  skipsteps+=("$OPTARG")
+            ;;
+        ?)  echo "Illegal option: -$OPTARG"
+        usage
+        exit 1
+        ;;
+    esac
+done
+
+let OPTION_COUNT="$OPTIND-1"
+shift $OPTION_COUNT
+
+
+echo "${skipsteps[@]}"
+
+
+for ele in "${skipsteps[@]}"; do
+    steps=(${steps[@]/*${ele}*/})
+done
+
+
+printf "Argument OPTION_COUNT is %s\n" "$OPTION_COUNT"
+printf "Argument EMACS_DIRECTORY is %s\n" "$EMACS_DIRECTORY"
+printf "Argument skipsteps is %s\n" "${skipsteps[@]}"
+printf "Argument steps is %s\n" "${steps[@]}"
+
 
 copy-emacs-icon(){
     filename="/usr/local/share/applications/emacs.desktop"
     replace="Icon=$DOTFILES_ROOT/icons/emacs.png"
     if [ -f "$DOTFILES_ROOT/icons/emacs.png" ]; then
-           search=$(grep Icon=emacs "$filename")
-           if grep Icon=emacs "$filename"; then
-           sudo sed -i "s|$search|$replace|" "$filename"
-      fi
+        search=$(grep Icon=emacs "$filename")
+        if grep Icon=emacs "$filename"; then
+            sudo sed -i "s|$search|$replace|" "$filename"
+        fi
     fi
 }
 
@@ -67,36 +121,31 @@ install-emacs-deps() {
 
 kill-emacs () {
     if pgrep emacs >/dev/null ; then
-        echo "Emacs is running."
-        read -p "Do you want to kill Emacs? [y/n] " answer
-        case ${answer:0:1} in
-            y|Y )
-                echo "Killing Emacs..."
-                pkill emacs
-                echo "Emacs killed."
-                ;;
-            * )
-                echo "Not killing Emacs."
-                ;;
-        esac
+        echo "Emacs is running. Killing emacs"
+        pkill emacs
     else
         echo "Emacs is not running."
     fi
 }
 
-update-emacs() {
+pull-emacs() {
     if [ ! -d "$EMACS_DIRECTORY" ];
     then
         echo "Cloning emacs"
         git clone --depth 1 https://git.savannah.gnu.org/git/emacs.git "$EMACS_DIRECTORY"
         cd "$EMACS_DIRECTORY" || exit
     else
-        cd "$EMACS_DIRECTORY" || exit
-        echo "Cleanup emacs"
-        sudo make extraclean
         echo "Pulling emacs"
         git pull origin "$(git rev-parse --abbrev-ref HEAD)"
     fi
+}
+
+remove-emacs() {
+    cd "$EMACS_DIRECTORY" || exit
+    echo "Uninstalling Emacs"
+    sudo make uninstall
+    echo "Cleaning Emacs"
+    sudo make extraclean
 }
 
 build-emacs() {
@@ -117,31 +166,16 @@ install-emacs() {
     copy-emacs-icon
 }
 
-
-build-emacs-interactive () {
-    read -rp "Compile emacs (y/n)? " answer
-    case ${answer:0:1} in
-        y|Y )
-            install-emacs-deps
-            kill-emacs
-            update-emacs
-            build-emacs
-            ;;
-        * )
-            echo "Emacs is not configured"
-            ;;
-    esac
-        read -rp "Install emacs (y/n)? " answer
-
-     case ${answer:0:1} in
-        y|Y )
-            kill-emacs
-            install-emacs
-            ;;
-        * )
-            echo "Skipping installing"
-            ;;
-    esac
-}
-
-build-emacs-interactive
+for step in "${steps[@]}"; do
+    if [ $SKIP_PROMPT == "yes" ]; then
+        eval "$step"
+    else read -p "Execute $step? [y/n] " answer
+         case ${answer:0:1} in
+             y|Y )
+                 eval "$step"
+                 ;;
+             * )
+                 ;;
+         esac
+    fi
+done
