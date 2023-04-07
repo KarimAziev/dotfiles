@@ -135,6 +135,7 @@ pull-emacs() {
         git clone --depth 1 https://git.savannah.gnu.org/git/emacs.git "$EMACS_DIRECTORY"
         cd "$EMACS_DIRECTORY" || exit
     else
+        cd "$EMACS_DIRECTORY" || exit
         echo "Pulling emacs"
         git pull origin "$(git rev-parse --abbrev-ref HEAD)"
     fi
@@ -163,7 +164,6 @@ build-emacs() {
 install-emacs() {
     cd "$EMACS_DIRECTORY" || exit
     sudo make install
-    copy-emacs-icon
 }
 
 for step in "${steps[@]}"; do
