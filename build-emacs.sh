@@ -7,19 +7,11 @@ fi
 set -o pipefail
 
 usage() {
-    cat << EOF
-usage: $0 [OPTIONS]...
-
-Update, compile and install latest emacs.
-
-Arguments:
-  -s skip (install-emacs-deps|build-emacs|kill-emacs|pull-emacs|install-emacs)
-
-OPTIONS:
-  -h    Show this message
-  -p    Source directory for emacs repository (default is $HOME/emacs)
-  -y    Automatic yes (default no)
-EOF
+    echo "Usage: $0 [-h] [-p EMACS_DIRECTORY] [-y] [-s step]"
+    echo "    -h              display this help message"
+    echo "    -p              path to Emacs directory"
+    echo "    -y              skip prompt for confirmation"
+    echo "    -s              skip specified steps (can be used multiple times)"
 }
 
 SKIP_PROMPT="false"
@@ -36,7 +28,7 @@ steps=(install-emacs-deps
 skipsteps=()
 
 
-while getopts ":hs:fp:ry:R" OPTION ; do
+while getopts ":hs:fp:ryR" OPTION ; do
     case $OPTION in
         h)  usage
             exit 0
@@ -71,7 +63,9 @@ printf "Argument EMACS_DIRECTORY is %s\n" "$EMACS_DIRECTORY"
 printf "Argument skipsteps is %s\n" "${skipsteps[@]}"
 printf "Argument steps is %s\n" "${steps[@]}"
 
-
+installed() {
+    return "$(dpkg-query -W -f '${Status}\n' "${1}" 2>&1|awk '/ok installed/{print 0;exit}{print 1}')"
+}
 copy-emacs-icon(){
     filename="/usr/local/share/applications/emacs.desktop"
     replace="Icon=$DOTFILES_ROOT/icons/emacs.png"
