@@ -1,71 +1,115 @@
 #!/usr/bin/env bash
 
-if [ -z "$DOTFILES_ROOT" ]; then
-  DOTFILES_ROOT=$HOME/dotfiles
-fi
-
+set -e
 set -o pipefail
 
-usage() {
-  echo "Usage: $0 [-h] [-p EMACS_DIRECTORY] [-y] [-n step]"
-  echo "    -h              display this help message"
-  echo "    -p              path to Emacs directory"
-  echo "    -y              skip prompt for confirmation"
-  echo "    -n              skip specified steps (can be used multiple times)"
-}
-
+DOTFILES_ROOT=${DOTFILES_ROOT:-$HOME/dotfiles}
 SKIP_PROMPT="false"
 EMACS_DIRECTORY="$HOME/emacs"
 
-steps=(install_deps kill_emacs remove_emacs pull_emacs build_emacs install_emacs copy_emacs_icon)
+steps=(
+  install_deps
+  kill_emacs
+  remove_emacs
+  pull_emacs
+  build_emacs
+  install_emacs
+  fix_emacs_xwidgets
+  copy_emacs_icon
+)
+usage() {
+  echo "Usage: $0 [OPTION]..."
+  echo "Install and configure emacs with the specified options."
+  echo
+  echo "Options:"
+  echo "  -h              display this help and exit"
+  echo "  -p  DIRECTORY   specify the emacs directory, default is '\$HOME/emacs'"
+  echo "  -y              skip all the prompts and directly install emacs and proceed with the steps"
+  echo "  -n  STEPS       specify the steps to skip, steps have to be comma separated [install_deps,kill_emacs,remove_emacs,pull_emacs,build_emacs,install_emacs,fix_emacs_xwidgets,copy_emacs_icon]"
+  echo
+  echo "Example:"
+  echo "  $0 -p \$HOME/myemacs -n install_deps,pull_emacs build and install emacs in \$HOME/myemacs without installing dependencies and pulling emacs source."
+  exit 0
+}
 
-while getopts ":hn:fp:ryR" OPTION; do
-  case $OPTION in
-    h)
-      usage
-      exit 0
-      ;;
-    p)
-      EMACS_DIRECTORY=$(readlink -f "$OPTARG")
-      ;;
-    y)
-      SKIP_PROMPT="yes"
-      ;;
-    n)
-      skipsteps+=("$OPTARG")
-      ;;
-    ?)
-      echo "Illegal option: -$OPTARG"
-      usage
-      exit 1
-      ;;
-  esac
-done
+filter_steps() {
+  # We keep the original IFS value in oldIFS, set IFS to
+  # ',' for our purposes and then set IFS back to its original value using oldIFS
+  #  after we're done using it
+  local oldIFS="$IFS"
+  IFS=','
+  read -r -a skipsteps <<< "$1"
+  IFS="$oldIFS"
+  local filtered_steps=()
+  for step in "${steps[@]}"; do
+    if ! printf '%s\n' "${skipsteps[@]}" | grep -q -P "^$step$"; then
+      filtered_steps+=("$step")
+    fi
+  done
+  steps=("${filtered_steps[@]}")
+}
 
-let OPTION_COUNT="$OPTIND-1"
+parse_arguments() {
+  while getopts ":hn:p:y" OPTION; do
+    case $OPTION in
+      h)
+        usage
+        exit 0
+        ;;
+      p)
+        EMACS_DIRECTORY=$(readlink -f "$OPTARG")
+        ;;
+      y)
+        SKIP_PROMPT="yes"
+        ;;
+      n)
+        filter_steps "$OPTARG"
+        ;;
+      ?)
+        echo "Illegal option: -$OPTARG"
+        usage
+        exit 1
+        ;;
+    esac
+  done
+  shift $((OPTIND - 1))
+}
 
-shift $OPTION_COUNT
+main() {
+  parse_arguments "$@"
 
-echo "${skipsteps[@]}"
-
-for ele in "${skipsteps[@]}"; do
-  read -r -a "${skipsteps[@]}" <<< "${steps[@]/*${ele}*/}"
-done
-
-printf "Argument OPTION_COUNT is %s\n" "$OPTION_COUNT"
-printf "Argument EMACS_DIRECTORY is %s\n" "$EMACS_DIRECTORY"
-printf "Argument skipsteps is %s\n" "${skipsteps[@]}"
-printf "Argument steps is %s\n" "${steps[@]}"
+  for step in "${steps[@]}"; do
+    if [ $SKIP_PROMPT == "yes" ]; then
+      $step
+    else
+      read -r -p "Execute $step? [Y/n] " answer
+      case ${answer:-Y} in # set default to Y
+        [yY]*)
+          $step
+          ;;
+        *)
+          echo "Skipping $step" # print a message when skipping
+          ;;
+      esac
+    fi
+  done
+}
 
 copy_emacs_icon() {
-  filename="/usr/local/share/applications/emacs.desktop"
-  replace="Icon=$DOTFILES_ROOT/icons/emacs.png"
+  local filename="/usr/local/share/applications/emacs.desktop"
+  local replace="Icon=$DOTFILES_ROOT/icons/emacs.png"
+  local search
   if [ -f "$DOTFILES_ROOT/icons/emacs.png" ]; then
     search=$(grep Icon=emacs "$filename")
     if grep Icon=emacs "$filename"; then
       sudo sed -i "s|$search|$replace|" "$filename"
     fi
   fi
+}
+
+fix_emacs_xwidgets() {
+  local filename="/usr/local/share/applications/emacs.desktop"
+  sudo sed -i 's|Exec=emacs %F|Exec=env SNAP=emacs SNAP_NAME=emacs SNAP_REVISION=1 emacs|' $filename
 }
 
 install_deps() {
@@ -161,17 +205,4 @@ install_emacs() {
   sudo make install
 }
 
-for step in "${steps[@]}"; do
-  if [ $SKIP_PROMPT == "yes" ]; then
-    eval "$step"
-  else
-    read -p "Execute $step? [y/n] " answer
-    case ${answer:0:1} in
-      y | Y)
-        eval "$step"
-        ;;
-      *) ;;
-
-    esac
-  fi
-done
+main "$@"
