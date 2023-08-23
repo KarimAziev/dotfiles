@@ -1,4 +1,0 @@
-ppa:git-core/ppa
-ppa:flacon/ppa
-ppa:xtradeb/apps
-ppa:deadsnakes/ppa
