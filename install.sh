@@ -60,11 +60,7 @@ case ${answer:0:1} in
 esac
 
 
-
-cd "$DOTFILES_ROOT" || exit
-source "$DOTFILES_ROOT/build-emacs.sh"
-
-cd "$HOME"
+bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh)"
 
 cd "$HOME"
 
