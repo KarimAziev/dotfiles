@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 # Define the steps of initialization
 declare -a steps=(init_git init_nvm init_google_chrome init_google_session_dump
   init_mu4e_deps remap_caps init_emacs init_emacs_gtk_theme init_pass_extension
@@ -134,32 +136,6 @@ init_silversearch() {
   sudo apt-get install -y silversearcher-ag
 }
 
-# The main function that runs all the initialization steps
-main() {
-  apt_init
-  local steps_to_execute
-
-  # If "--non-interactive" is among the arguments, ignore it when assigning steps
-  if [[ "$#" -gt 0 && "$1" != "--non-interactive" ]]; then
-    steps_to_execute=("$@")
-  else
-    steps_to_execute=("${steps[@]}")
-  fi
-
-  for step in "${steps_to_execute[@]}"; do
-    if [ "$SKIP_PROMPT" = "yes" ]; then
-      $step
-    else
-      read -r -p "Execute $step? [Y/n] " answer
-      if [[ $answer == [Yy]* ]] || [[ -z $answer ]]; then
-        $step
-      else
-        echo "Skipping $step"
-      fi
-    fi
-  done
-}
-
 show_help() {
   echo "Usage: $(basename "$0") [OPTIONS] [COMMANDS]"
   echo "Initializes various tools and utilities on a new machine."
@@ -189,6 +165,7 @@ show_help() {
   echo "Example: $(basename "$0") init_git init_nvm"
 }
 
+# The main function that runs all the initialization steps
 # Check command line arguments for "--help" or "-h", "--non-interactive" or "-n"
 for arg in "$@"; do
   if [ "$arg" = "--help" ] || [ "$arg" = "-h" ]; then
@@ -206,4 +183,26 @@ for i in "${!args[@]}"; do
   fi
 done
 
-main "${args[@]}"
+apt_init
+
+steps_to_execute
+
+# If "--non-interactive" is among the arguments, ignore it when assigning steps
+if [[ "$#" -gt 0 && "$1" != "--non-interactive" ]]; then
+  steps_to_execute=("$@")
+else
+  steps_to_execute=("${steps[@]}")
+fi
+
+for step in "${steps_to_execute[@]}"; do
+  if [ "$SKIP_PROMPT" = "yes" ]; then
+    $step
+  else
+    read -r -p "Execute $step? [Y/n] " answer
+    if [[ $answer == [Yy]* ]] || [[ -z $answer ]]; then
+      $step
+    else
+      echo "Skipping $step"
+    fi
+  fi
+done
