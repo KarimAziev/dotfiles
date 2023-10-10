@@ -92,7 +92,9 @@ remap_caps() {
   else
     echo XKBOPTIONS="\"ctrl:nocaps,grp:toggle\"" | sudo tee -a $filename
   fi
-  setxkbmap -option 'ctrl:nocaps,grp:toggle'
+  if [ "$XDG_SESSION_TYPE" = "x11" ] || [ "$XDG_SESSION_TYPE" = "xwayland" ]; then
+    setxkbmap -option 'ctrl:nocaps,grp:toggle'
+  fi
   sudo dpkg-reconfigure keyboard-configuration
 }
 
