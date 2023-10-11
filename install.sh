@@ -100,6 +100,9 @@ remap_caps() {
 
 init_emacs_gtk_theme() {
   gsettings set org.gnome.desktop.interface gtk-key-theme "Emacs"
+  # By default, '<Control>period' and '<Control>semicolon' in Ubuntu toggle emoji
+  # typing, which can be annoying. So, let's turn it off completely.
+  gsettings set org.freedesktop.ibus.panel.emoji hotkey "[]"
 }
 
 init_pass_extension() {
