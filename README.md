@@ -35,12 +35,6 @@ bypass these prompts, run the script in the non-interactive mode by
 passing either `--non-interactive` or `-n` arguments:
 
 ```shell
-bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/dotfiles/main/install.sh) --non-interactive"
-```
-
-Or if you downloaded repo manully,
-
-```shell
 ./install.sh --non-interactive
 ```
 
@@ -67,7 +61,7 @@ Here are some commands that the script can execute:
 - `init_google_session_dump`: Install Google Session Dump.
 - `init_mu4e_deps`: Install dependencies for mu4e.
 - `remap_caps`: Remap the Caps Lock key to Control.
-- `init_emacs`: Install Emacs if it's not installed.
+- `init_emacs`: Compile and install Emacs if it's not installed using this [script](https://github.com/KarimAziev/build-emacs).
 - `init_emacs_gtk_theme`: Set Emacs as the GTK theme.
 - `init_pass_extension`: Install Pass password manager extension.
 - `init_pass`: Install Pass password manager.
@@ -78,12 +72,6 @@ Here are some commands that the script can execute:
 - `init_silversearch`: Install the Silver Searcher.
 
 To see all the available commands and options, use:
-
-```shell
-bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/dotfiles/main/install.sh) --help"
-```
-
-Or if you downloaded repo manully:
 
 ```shell
 ./install.sh --help
