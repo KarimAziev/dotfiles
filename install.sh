@@ -3,9 +3,9 @@
 set -e
 
 # Define the steps of initialization
-declare -a steps=(init_git init_nvm init_google_chrome init_google_session_dump
+declare -a steps=(init_git init_pkgs init_nvm init_google_chrome init_google_session_dump
   init_mu4e_deps remap_caps init_emacs init_emacs_gtk_theme init_pass_extension
-  init_pass init_gh init_avidemux init_dconf_editor init_flacon init_silversearch)
+  init_avidemux init_flacon)
 
 # Set default prompt option
 SKIP_PROMPT="no"
@@ -22,33 +22,143 @@ installed() {
   dpkg-query -W -f='${Status}\n' "${1}" 2> /dev/null | awk '/ok installed/{print 0;exit}{print 1}'
 }
 
-# Function to initialize package repositories and install necessary packages
-apt_init() {
-  init_repos
-  sudo apt-get update
-  install_pkgs
-}
-
-# Function to add necessary repositories
-init_repos() {
-  local repos=(ppa:git-core/ppa ppa:flacon/ppa ppa:xtradeb/apps ppa:deadsnakes/ppa)
+# Add apt repositories if already not added
+apt_add_repos() {
+  local repos=("$@")
   for repo in "${repos[@]}"; do
-    sudo apt-add-repository -y "$repo"
+    if ! grep -hr "^deb.*$repo" /etc/apt/sources.list /etc/apt/sources.list.d/ > /dev/null; then
+      sudo apt-add-repository -y "$repo"
+      sudo apt-get update
+    else
+      echo "$repo already exists in source list"
+    fi
   done
 }
 
-# Function to install packages
-install_pkgs() {
-  local pkgs=(tmux rlwrap silversearcher-ag pandoc xclip jq fd-find viewnior vlc
-    youtube-dl hunspell w3m mpv cmake libtool libtool-bin curl wget net-tools
-    ditaa indent smartmontools htop command-not-found nmap fonts-noto
-    fonts-arphic-ukai sysstat tree synapse bmon clangd bear tlp)
-
+# Add apt packages if already not added
+apt_install_pkgs() {
+  local pkgs=("$@")
   for pkg in "${pkgs[@]}"; do
     if ! (installed "$pkg"); then
       sudo apt-get install --assume-yes "$pkg"
     fi
   done
+}
+
+# Function to install necessary packages
+init_pkgs() {
+  local pkgs=(
+    # tmux: terminal multiplexer
+    tmux
+
+    # rlwrap: readline feature command line wrapper
+    rlwrap
+
+    # silversearcher-ag: very fast grep-like program, alternative to ack-grep
+    silversearcher-ag
+
+    # pandoc: general markup converter
+    pandoc
+
+    # xclip: command line interface to X selections
+    xclip
+
+    # jq: lightweight and flexible command-line JSON processor
+    jq
+
+    # fd-find: Simple, fast and user-friendly alternative to find
+    fd-find
+
+    # viewnior: simple, fast and elegant image viewer
+    viewnior
+
+    # vlc: multimedia player and streamer
+    vlc
+
+    # youtube-dl: downloader of videos from YouTube and other sites
+    youtube-dl
+
+    # hunspell: spell checker and morphological analyzer (program)
+    hunspell
+
+    # w3m: WWW browsable pager with excellent tables/frames support
+    w3m
+
+    # mpv: video player based on MPlayer/mplayer2
+    mpv
+
+    # cmake: cross-platform, open-source make system
+    cmake
+
+    # libtool: Generic library support script
+    libtool
+
+    # libtool-bin: Generic library support script (libtool binary)
+    libtool-bin
+
+    # curl: command line tool for transferring data with URL syntax
+    curl
+
+    # wget: retrieves files from the web
+    wget
+
+    # net-tools: NET-3 networking toolkit
+    net-tools
+
+    # ditaa: convert ASCII diagrams into proper bitmap graphics
+    ditaa
+
+    # indent: C language source code formatting program
+    indent
+
+    # smartmontools: control and monitor storage systems using S.M.A.R.T.
+    smartmontools
+
+    # htop: interactive processes viewer
+    htop
+
+    # command-not-found: Suggest installation of packages in interactive bash sessions
+    command-not-found
+
+    # nmap: The Network Mapper
+    nmap
+
+    # fonts-noto: metapackage to pull in all Noto fonts
+    fonts-noto
+
+    # fonts-arphic-ukai: "AR PL UKai" Chinese Unicode TrueType font collection Kaiti style
+    fonts-arphic-ukai
+
+    # sysstat: system performance tools for Linux
+    sysstat
+
+    # tree: displays an indented directory tree, in color
+    tree
+
+    # synapse: semantic file launcher
+    synapse
+
+    # bmon: portable bandwidth monitor and rate estimator
+    bmon
+
+    # clangd: Language server that provides IDE-like features to editors
+    clangd
+
+    # bear: generate compilation database for Clang tooling
+    bear
+
+    # tlp: Optimize laptop battery life
+    tlp
+
+    # GitHub CLI, GitHub’s official command line tool
+    gh
+
+    # lightweight directory-based password manager
+    pass
+
+    # simple configuration storage system - graphical editor
+    dconf-editor)
+  apt_install_pkgs "${pkgs[@]}"
 }
 
 # These functions initialize various tools and utilities as needed
@@ -77,8 +187,23 @@ init_google_session_dump() {
 }
 
 init_mu4e_deps() {
-  sudo apt install meson gir1.2-glib-2.0
-  sudo apt-get install gmime-3.0 libxapian-dev libxapian30 guile-3.0 xapian-omega xapian-tools
+  local pkgs=(
+    # meson: high-productivity build system
+    meson
+    # gir1.2-glib-2.0: Introspection data for GLib, GObject, Gio and GModule
+    gir1.2-glib-2.0
+    gmime-3.0
+    # libxapian-dev: Development files for Xapian search engine library
+    libxapian-dev
+    # libxapian30: Search engine library
+    libxapian30
+    # guile-3.0: GNU extension language and Scheme interpreter
+    guile-3.0
+    # xapian-omega: CGI search interface and indexers using Xapian
+    xapian-omega
+    # xapian-tools: Basic tools for Xapian search engine library
+    xapian-tools)
+  apt_install_pkgs "${pkgs[@]}"
 }
 
 remap_caps() {
@@ -106,42 +231,27 @@ init_emacs_gtk_theme() {
 }
 
 init_pass_extension() {
-  sudo apt install python3.9 python3-setuptools python3-yaml python3-defusedxml python3-secretstorage python-magic python3-cryptography
+  apt_add_repos ppa:deadsnakes/ppa # New Python Versions
+  apt_install_pkgs python3.9 python3-setuptools python3-yaml python3-defusedxml python3-secretstorage python-magic python3-cryptography
   wget -qO - https://pkg.pujol.io/debian/gpgkey | gpg --dearmor | sudo tee /usr/share/keyrings/pujol.io.gpg > /dev/null
   echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/pujol.io.gpg] https://pkg.pujol.io/debian/repo all main' | sudo tee /etc/apt/sources.list.d/pkg.pujol.io.list
   sudo apt-get update
   sudo apt-get install pass-extension-import
 }
 
-init_pass() {
-  sudo apt-get install -y pass
-}
-
-init_gh() {
-  sudo apt update
-  sudo apt install gh
-}
-
 init_avidemux() {
-  sudo apt install software-properties-common apt-transport-https -y
-  sudo add-apt-repository ppa:xtradeb/apps -y
+  apt_install_pkgs software-properties-common apt-transport-https
+  apt_add_repos ppa:xtradeb/apps
   sudo apt install avidemux* -y
 }
 
-init_dconf_editor() {
-  sudo apt-get install -y dconf-editor
-}
-
 init_flacon() {
-  sudo apt-get update && sudo apt-get install -y flacon
-}
-init_silversearch() {
-  sudo apt-get install -y silversearcher-ag
+  apt_add_repos ppa:flacon/ppa
+  apt_install_pkgs flacon
 }
 
 # The main function that runs all the initialization steps
 main() {
-  apt_init
   local steps_to_execute
 
   # If "--non-interactive" is among the arguments, ignore it when assigning steps
@@ -175,6 +285,7 @@ show_help() {
   echo
   echo "Commands:"
   echo "init_git           Initialize git by installing it and configuring default branch."
+  echo "init_pkgs          Install necessary packages"
   echo "init_nvm           Install Node Version Manager if not already installed."
   echo "init_google_chrome Download and install Google Chrome."
   echo "init_google_session_dump Install Google Session Dump."
@@ -183,12 +294,8 @@ show_help() {
   echo "init_emacs         Install Emacs if not already installed."
   echo "init_emacs_gtk_theme Set Emacs as the GTK theme."
   echo "init_pass_extension Install Pass password manager extension."
-  echo "init_pass          Install Pass password manager."
-  echo "init_gh            Install GitHub CLI."
   echo "init_avidemux      Install avidemux video editing software."
-  echo "init_dconf_editor  Install dconf Editor."
   echo "init_flacon        Install Flacon Audio File Encoder."
-  echo "init_silversearch  Install the Silver Searcher."
   echo
   echo "To invoke multiple commands, space-separate them."
   echo "Example: $(basename "$0") init_git init_nvm"
