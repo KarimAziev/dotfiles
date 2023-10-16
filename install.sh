@@ -12,7 +12,7 @@ SKIP_PROMPT="no"
 
 # Check command line arguments for non-interactive flag
 for arg in "$@"; do
-  if [ "$arg" = "--non-interactive" ] || [ "$arg" = "-n" ]; then
+  if [ "$arg" = "--non-interactive" ] || [ "$arg" = "-y" ]; then
     SKIP_PROMPT="yes"
   fi
 done
@@ -280,7 +280,7 @@ show_help() {
   echo "Initializes various tools and utilities on a new machine."
   echo
   echo "Options:"
-  echo "-n, --non-interactive   Run script without prompting for confirmation."
+  echo "-y, --non-interactive   Run script without prompting for confirmation."
   echo "-h, --help              Show help and exit."
   echo
   echo "Commands:"
@@ -301,19 +301,19 @@ show_help() {
   echo "Example: $(basename "$0") init_git init_nvm"
 }
 
-# Check command line arguments for "--help" or "-h", "--non-interactive" or "-n"
+# Check command line arguments for "--help" or "-h", "--non-interactive" or "-y"
 for arg in "$@"; do
   if [ "$arg" = "--help" ] || [ "$arg" = "-h" ]; then
     show_help
     exit 0
-  elif [ "$arg" = "--non-interactive" ] || [ "$arg" = "-n" ]; then
+  elif [ "$arg" = "--non-interactive" ] || [ "$arg" = "-y" ]; then
     SKIP_PROMPT="yes"
   fi
 done
 
 args=("$@")
 for i in "${!args[@]}"; do
-  if [[ "${args[$i]}" = "--non-interactive" ]] || [[ "${args[$i]}" = "-n" ]]; then
+  if [[ "${args[$i]}" = "--non-interactive" ]] || [[ "${args[$i]}" = "-y" ]]; then
     unset 'args[i]'
   fi
 done
