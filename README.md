@@ -98,6 +98,8 @@ Here are some commands that the script can execute:
   | tmux | Terminal multiplexer |
 
 - `init_nvm`: Install Node Version Manager if it's not installed.
+- `init_pyenv`: Install Python Version Manager if it's not installed.
+- `init_sdkman`: Install Java Version Manager if it's not installed.
 - `init_google_chrome`: Download and install Google Chrome.
 - `init_google_session_dump`: Install Google Session Dump.
 - `init_mu4e_deps`: Install dependencies for mu4e.
@@ -107,6 +109,8 @@ Here are some commands that the script can execute:
 - `init_pass_extension`: Install Pass password manager extension.
 - `init_avidemux`: Install avidemux video editing software.
 - `init_flacon`: Install Flacon Audio File Encoder.
+- `init_ghcup`: Install GHCup, the Haskell toolchain installer.
+- `ensure_export_path`: Ensure the export PATH commands are moved to the end of `.bashrc`.
 
 To see all the available commands and options, use:
 

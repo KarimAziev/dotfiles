@@ -5,7 +5,7 @@ set -e
 # Define the steps of initialization
 declare -a steps=(init_git init_pkgs init_nvm init_google_chrome init_google_session_dump
   init_mu4e_deps remap_caps init_emacs init_emacs_gtk_theme init_pass_extension
-  init_avidemux init_flacon)
+  init_avidemux init_flacon init_pyenv init_sdkman init_ghcup ensure_export_path)
 
 # Set default prompt option
 SKIP_PROMPT="no"
@@ -157,7 +157,10 @@ init_pkgs() {
     pass
 
     # simple configuration storage system - graphical editor
-    dconf-editor)
+    dconf-editor
+    # multimedia framework to decode, encode, transcode, mux, demux, stream, filter and play
+    ffmpeg
+  )
   apt_install_pkgs "${pkgs[@]}"
 }
 
@@ -173,8 +176,68 @@ init_emacs() {
   fi
 }
 
+ensure_export_path() {
+  local BASHRC="$HOME/.bashrc"
+  if [[ -f "$BASHRC" ]]; then
+    # Temporary file for new content
+    local TMP_FILE
+    TMP_FILE=$(mktemp)
+
+    # Ensure the temporary file is removed on script exit
+    trap 'rm -f "$TMP_FILE"' EXIT
+
+    # Remove existing 'export PATH' and related comment lines, redirecting output to temp file
+    grep -v -E '^# Export PATH environment variable$|^export PATH$' "$BASHRC" > "$TMP_FILE"
+
+    # Append a newline for spacing if file doesn't end with one
+    tail -c1 "$TMP_FILE" | read -r _ || echo >> "$TMP_FILE"
+
+    # Check if 'export PATH' was found in the original .bashrc file
+    if grep -q -E '^export PATH$' "$BASHRC"; then
+      # Add the comment and 'export PATH' line at the end of the file
+      echo "# Export PATH environment variable" >> "$TMP_FILE"
+      echo "export PATH" >> "$TMP_FILE"
+    else
+      # If 'export PATH' wasn't found, append it
+      echo "# Export PATH environment variable - added by script" >> "$TMP_FILE"
+      echo "export PATH" >> "$TMP_FILE"
+    fi
+
+    # Move temp file to original .bashrc location
+    mv "$TMP_FILE" "$BASHRC"
+  fi
+}
+
 init_nvm() {
-  [ -d "${HOME}/.nvm" ] || wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+  # Preparing the NVM part
+  local NVM_LINES="
+# NVM (Node.js Version Manager) initialization.
+export NVM_DIR=\"\$HOME/.nvm\"
+# shellcheck disable=SC1090,SC1091
+[ -s \"\$NVM_DIR/nvm.sh\" ] && \. \"\$NVM_DIR/nvm.sh\"  # This loads nvm
+# shellcheck disable=SC1090,SC1091
+[ -s \"\$NVM_DIR/bash_completion\" ] && \. \"\$NVM_DIR/bash_completion\"  # This loads nvm bash_completion"
+
+  # Preparing the npm completion part
+  local NPM_COMPLETION_LINES="# Enable npm command completion.
+if type npm &> /dev/null && type complete &> /dev/null; then
+  NPM_COMPLETION=\"\$(npm completion)\"
+  if [ -n \"\$NPM_COMPLETION\" ]; then
+    eval \"\$NPM_COMPLETION\"
+  fi
+fi"
+
+  # Insert NVM initialization if not present
+  if ! grep -q 'NVM_DIR' "$HOME/.bashrc"; then
+    echo "$NVM_LINES" >> "$HOME/.bashrc"
+  fi
+
+  # Insert NPM completion if not present
+  if ! grep -q 'npm completion' "$HOME/.bashrc"; then
+    echo "$NPM_COMPLETION_LINES" >> "$HOME/.bashrc"
+  fi
+
+  wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 }
 
 init_google_chrome() {
@@ -250,6 +313,133 @@ init_flacon() {
   apt_install_pkgs flacon
 }
 
+write_gpg_agent_conf() {
+  local gpg_agent_conf="$HOME/.gnupg/gpg-agent.conf"
+  local pinentry_path="/usr/bin/pinentry-gnome3"
+
+  # Check if pinentry-gnome3 exists and is executable
+  if [[ ! -x "$pinentry_path" ]]; then
+    echo "The pinentry-gnome3 program is not installed."
+    return 1
+  fi
+
+  # Check if gpg-agent.conf exists
+  if [[ -f "$gpg_agent_conf" ]]; then
+    # Write the desired settings to the config file
+    cat > "$gpg_agent_conf" << EOF
+pinentry-program /usr/bin/pinentry-gnome3
+allow-emacs-pinentry
+allow-loopback-pinentry
+default-cache-ttl 604800
+max-cache-ttl 604800
+EOF
+    echo "gpg-agent.conf has been updated."
+  else
+    echo "gpg-agent.conf does not exist."
+    return 1
+  fi
+
+  return 0
+}
+
+# SDKMAN installation and setup
+init_sdkman() {
+  if [ ! -d "$HOME/.sdkman" ]; then
+    echo "Installing SDKMAN..."
+    curl -s "https://get.sdkman.io" | bash
+  fi
+
+  # Append SDKMAN init to .bashrc if not already present,
+  if ! grep -q 'sdkman-init.sh' ~/.bashrc; then
+    {
+      echo ''
+      echo '# Java Version Manager (SDKMAN) installation and setup'
+      echo '# shellcheck disable=SC1090,SC1091'
+      # shellcheck disable=SC2016 # avoid SC2016 by using intended single quotes
+      echo 'export SDKMAN_DIR="$HOME/.sdkman"'
+      echo '# shellcheck disable=SC1090,SC1091'
+      # shellcheck disable=SC2016 # avoid SC2016 by using intended single quotes
+      echo '[[ -s "$SDKMAN_DIR/bin/sdkman-init.sh" ]] && source "$SDKMAN_DIR/bin/sdkman-init.sh"'
+      echo ''
+    } >> ~/.bashrc
+  fi
+}
+
+# Pyenv Installation
+init_pyenv() {
+  if [ ! -d "$HOME/.pyenv" ]; then
+    echo "Installing Pyenv..."
+    curl https://pyenv.run | bash
+  fi
+
+  # Append Pyenv init to .bashrc if not already present
+  if ! grep -q 'pyenv init' ~/.bashrc; then
+    {
+      echo ''
+      echo '# Python Version Manager (pyenv) installation and setup'
+      # shellcheck disable=SC2016 # avoid SC2016 by using intended single quotes
+      echo 'export PATH="$HOME/.pyenv/bin:$PATH"'
+      # shellcheck disable=SC2016 # avoid SC2016 by using intended single quotes
+      echo 'eval "$(pyenv init --path)"'
+      # shellcheck disable=SC2016 # avoid SC2016 by using intended single quotes
+      echo 'eval "$(pyenv virtualenv-init -)"'
+      echo ''
+    } >> ~/.bashrc
+  fi
+}
+
+# Init GHCup the main installer for Haskell
+init_ghcup() {
+  # Main settings:
+  #   * BOOTSTRAP_HASKELL_NONINTERACTIVE - any nonzero value for noninteractive installation
+  #   * BOOTSTRAP_HASKELL_NO_UPGRADE - any nonzero value to not trigger the upgrade
+  #   * BOOTSTRAP_HASKELL_MINIMAL - any nonzero value to only install ghcup
+  #   * GHCUP_USE_XDG_DIRS - any nonzero value to respect The XDG Base Directory Specification
+  #   * BOOTSTRAP_HASKELL_VERBOSE - any nonzero value for more verbose installation
+  #   * BOOTSTRAP_HASKELL_GHC_VERSION - the ghc version to install
+  #   * BOOTSTRAP_HASKELL_CABAL_VERSION - the cabal version to install
+  #   * BOOTSTRAP_HASKELL_CABAL_XDG - don't disable the XDG logic (this doesn't force XDG though, because cabal is confusing)
+  #   * BOOTSTRAP_HASKELL_INSTALL_NO_STACK - disable installation of stack
+  #   * BOOTSTRAP_HASKELL_INSTALL_NO_STACK_HOOK - disable installation stack ghcup hook
+  #   * BOOTSTRAP_HASKELL_INSTALL_HLS - whether to install latest hls
+  #   * BOOTSTRAP_HASKELL_ADJUST_BASHRC - whether to adjust PATH in bashrc (prepend)
+  #   * BOOTSTRAP_HASKELL_ADJUST_CABAL_CONFIG - whether to adjust mingw paths in cabal.config on windows
+  #   * BOOTSTRAP_HASKELL_DOWNLOADER - which downloader to use (default: curl)
+  #   * GHCUP_BASE_URL - the base url for ghcup binary download (use this to overwrite https://downloads.haskell.org/~ghcup with a mirror)
+  #   * GHCUP_MSYS2_ENV - the msys2 environment to use on windows, see https://www.msys2.org/docs/environments/ (defauts to MINGW64, MINGW32 or CLANGARM64, depending on the architecture)
+
+  local pkgs
+  # Get the Ubuntu version
+  local ubuntu_version
+  ubuntu_version=$(lsb_release -r | awk '{print $2}')
+  # Convert to an integer for comparison by removing the dot
+  local version_as_int
+  version_as_int=$(echo "$ubuntu_version" | tr -d '.')
+
+  # Check versions and install packages
+  if [ "$version_as_int" -ge 2010 ] && [ "$version_as_int" -lt 2300 ]; then
+    echo "Installing dependency for GHCup on Ubuntu >= 20.10 and < 23"
+    pkgs=(build-essential curl libffi-dev libffi8ubuntu1 libgmp-dev libgmp10 libncurses-dev libncurses5 libtinfo5)
+    sudo apt-get update
+    apt_install_pkgs "${pkgs[@]}"
+  elif [ "$version_as_int" -ge 2300 ]; then
+    echo "Installing dependency for GHCup on Ubuntu Version >= 23"
+    pkgs=(build-essential curl libffi-dev libffi8ubuntu1 libgmp-dev libgmp10 libncurses-dev)
+    sudo apt-get update
+    apt_install_pkgs "${pkgs[@]}"
+  else
+    echo "Unsupported version for this script."
+  fi
+  export BOOTSTRAP_HASKELL_NONINTERACTIVE=1
+  export BOOTSTRAP_HASKELL_GHC_VERSION=recommended
+  export BOOTSTRAP_HASKELL_CABAL_VERSION=recommended
+  export BOOTSTRAP_HASKELL_INSTALL_HLS=1
+  export BOOTSTRAP_HASKELL_ADJUST_BASHRC=1
+
+  echo "Installing GHCup, the Haskell toolchain installer..."
+  curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
+}
+
 # The main function that runs all the initialization steps
 main() {
   local steps_to_execute
@@ -280,22 +470,26 @@ show_help() {
   echo "Initializes various tools and utilities on a new machine."
   echo
   echo "Options:"
-  echo "-y, --non-interactive   Run script without prompting for confirmation."
-  echo "-h, --help              Show help and exit."
+  echo "-y, --non-interactive    Run script without prompting for confirmation."
+  echo "-h, --help               Show help and exit."
   echo
   echo "Commands:"
-  echo "init_git           Initialize git by installing it and configuring default branch."
-  echo "init_pkgs          Install necessary packages"
-  echo "init_nvm           Install Node Version Manager if not already installed."
-  echo "init_google_chrome Download and install Google Chrome."
+  echo "init_git                 Initialize git by installing it and configuring default branch."
+  echo "init_pkgs                Install necessary packages"
+  echo "init_nvm                 Install Node Version Manager if not already installed."
+  echo "init_pyenv               Install Python Version Manager if not already installed."
+  echo "init_sdkman              Install Java Version Manager if not already installed."
+  echo "init_google_chrome       Download and install Google Chrome."
   echo "init_google_session_dump Install Google Session Dump."
-  echo "init_mu4e_deps     Install dependencies for mu4e."
-  echo "remap_caps         Remap Caps Lock to Control key."
-  echo "init_emacs         Install Emacs if not already installed."
-  echo "init_emacs_gtk_theme Set Emacs as the GTK theme."
-  echo "init_pass_extension Install Pass password manager extension."
-  echo "init_avidemux      Install avidemux video editing software."
-  echo "init_flacon        Install Flacon Audio File Encoder."
+  echo "init_mu4e_deps           Install dependencies for mu4e."
+  echo "remap_caps               Remap Caps Lock to Control key."
+  echo "init_emacs               Install Emacs if not already installed."
+  echo "init_emacs_gtk_theme     Set Emacs as the GTK theme."
+  echo "init_pass_extension      Install Pass password manager extension."
+  echo "init_avidemux            Install avidemux video editing software."
+  echo "init_flacon              Install Flacon Audio File Encoder."
+  echo "init_ghcup               Install GHCup, the Haskell toolchain installer."
+  echo "ensure_export_path       Ensure the export PATH commands are moved to the end of .bashrc."
   echo
   echo "To invoke multiple commands, space-separate them."
   echo "Example: $(basename "$0") init_git init_nvm"
