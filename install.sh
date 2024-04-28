@@ -171,9 +171,12 @@ init_git() {
 }
 
 init_emacs() {
-  if ! command -v emacs &> /dev/null; then
-    bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh)"
+  if [ -z "${CI}" ]; then
+    if ! command -v emacs &> /dev/null; then
+      bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/build-emacs/main/build-emacs.sh)"
+    fi
   fi
+
 }
 
 ensure_export_path() {
