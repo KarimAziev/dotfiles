@@ -283,7 +283,11 @@ remap_caps() {
   if [ "$XDG_SESSION_TYPE" = "x11" ] || [ "$XDG_SESSION_TYPE" = "xwayland" ]; then
     setxkbmap -option 'ctrl:nocaps,grp:toggle'
   fi
-  sudo dpkg-reconfigure keyboard-configuration
+  # Skip in CI environments
+  if [ -z "${CI}" ]; then
+    sudo dpkg-reconfigure keyboard-configuration -f noninteractive
+  fi
+
 }
 
 init_emacs_gtk_theme() {
