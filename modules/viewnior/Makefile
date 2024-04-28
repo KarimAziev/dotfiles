@@ -1,7 +1,7 @@
 VIEWNIOR_DIR := $(HOME)/.config/viewnior
 
 install-viewnior:
-        mkdir -p $(VIEWNIOR_DIR)
+	mkdir -p $(VIEWNIOR_DIR)
 	ln -sfn $(CURDIR)/viewnior.conf $(VIEWNIOR_DIR)/viewnior.conf
 	ln -sfn $(CURDIR)/accel_map $(VIEWNIOR_DIR)/accel_map
 
