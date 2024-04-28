@@ -1,0 +1,28 @@
+name: Dotfiles CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    # Runs a single command using the runners shell
+    - name: Run install script
+      run: |
+        chmod +x ./install.sh
+        ./install.sh --non-interactive
+
+    # Example: Running a make command
+    - name: Apply dotfiles configurations
+      run: make install
