@@ -1,54 +1,80 @@
 # About
 
-Installation script automates the initialization of a new machine on `Ubuntu 22.04`
-by installing necessary tools, utilities, and configuring settings.
+This repository contains configurations and scripts to automate the setup of a new machine or environment on `Ubuntu 22.04`. It includes dotfiles for bash, mpv, viewnior, and several other configurations, alongside an installation script for automating the installation of necessary tools, applications, and utilities.
 
-It supports a wide range of tasks such as initializing git, installing
-NVM, Google Chrome, building and compiling Emacs, etc.
+The setup is divided into two main parts:
 
-# install.sh
+1. **Environment Setup Script (`install.sh`)**: Automates the process of installing necessary software and tools, configuring settings, and performing initial system setups like git initialization, command-line utilities, and development tools installation.
+2. **Dotfiles Configuration**: Utilizes Makefiles for modular management of configuration files, allowing for easy application, removal, and updating of dotfiles across the system.
 
-> - [About](#about)
-> - [Usage](#usage)
-> - [Commands](#commands)
+<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
 
-# Usage
+**Table of Contents**
 
-You can use the convenience script to install the dotfiles on any
-machine with a single command. Simply run the following command in your
-terminal:
+- [About](#about)
+  - [Usage](#usage)
+    - [Automated Setup with `install.sh`](#automated-setup-with-installsh)
+    - [Configuring Dotfiles with Make](#configuring-dotfiles-with-make)
+- [Commands](#commands)
+
+<!-- markdown-toc end -->
+
+## Usage
+
+### Automated Setup with `install.sh`
+
+The `install.sh` script simplifies the installation process, managing tasks like tool and utility installations. It supports both interactive and non-interactive modes, and you can execute specific configuration steps selectively.
+
+To start the setup, you can directly execute the script using the following command:
 
 ```shell
 bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/dotfiles/main/install.sh)"
 ```
 
-If you want to clone or download repository manually, remember to make
-the script executable (`chmod +x install.sh`) if it isn't already so you
-can run it using `./install.sh`.
+For a manually downloaded repository, ensure `install.sh` is executable:
 
 ```shell
+chmod +x install.sh
 ./install.sh
 ```
 
-The script will prompt you before executing each step. If you want to
-bypass these prompts, run the script in the non-interactive mode by
-passing either `--non-interactive` or `-y` arguments:
+To run in non-interactive mode, bypassing all prompts:
 
 ```shell
 ./install.sh --non-interactive
 ```
 
-You can also specify a subset of [steps](#commands) to run. For
-instance, to initialize git and install NVM, use:
-
-```shell
-bash -c "$(wget -qO- https://raw.githubusercontent.com/KarimAziev/dotfiles/main/install.sh) init_git init_nvm"
-```
-
-Or if you downloaded repo manully,
+To execute specific steps only, such as `init_git` and `init_nvm`:
 
 ```shell
 ./install.sh init_git init_nvm
+```
+
+### Configuring Dotfiles with Make
+
+After setting up the environment, configure your dotfiles using the root `Makefile` to symlink configurations for bash, mpv, viewnior, etc., into their respective locations:
+
+```shell
+make install
+```
+
+This command links configuration files like `.bashrc`, `mpv.conf`, and others to your `$HOME` directory, ensuring your settings are applied. You can manage configurations individually by specifying the module name, for example:
+
+```shell
+make install-bash
+make install-mpv
+```
+
+To clean up (remove) the configurations, use:
+
+```shell
+make clean
+```
+
+Or for a specific module:
+
+```shell
+make clean-bash
 ```
 
 # Commands
