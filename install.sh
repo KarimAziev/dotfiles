@@ -270,21 +270,21 @@ init_mu4e_deps() {
 }
 
 remap_caps() {
-  local filename="/etc/default/keyboard"
-  local search
-  local replace
-  if grep XKBOPTIONS= $filename; then
-    search=$(grep XKBOPTIONS= $filename)
-    replace=XKBOPTIONS="\"ctrl:nocaps,grp:toggle\""
-    sudo sed -i "s/$search/$replace/" $filename
-  else
-    echo XKBOPTIONS="\"ctrl:nocaps,grp:toggle\"" | sudo tee -a $filename
-  fi
-  if [ "$XDG_SESSION_TYPE" = "x11" ] || [ "$XDG_SESSION_TYPE" = "xwayland" ]; then
-    setxkbmap -option 'ctrl:nocaps,grp:toggle'
-  fi
   # Skip in CI environments
   if [ -z "${CI}" ]; then
+    local filename="/etc/default/keyboard"
+    local search
+    local replace
+    if grep XKBOPTIONS= $filename; then
+      search=$(grep XKBOPTIONS= $filename)
+      replace=XKBOPTIONS="\"ctrl:nocaps,grp:toggle\""
+      sudo sed -i "s/$search/$replace/" $filename
+    else
+      echo XKBOPTIONS="\"ctrl:nocaps,grp:toggle\"" | sudo tee -a $filename
+    fi
+    if [ "$XDG_SESSION_TYPE" = "x11" ] || [ "$XDG_SESSION_TYPE" = "xwayland" ]; then
+      setxkbmap -option 'ctrl:nocaps,grp:toggle'
+    fi
     sudo dpkg-reconfigure keyboard-configuration -f noninteractive
   fi
 
@@ -438,10 +438,12 @@ init_ghcup() {
   export BOOTSTRAP_HASKELL_GHC_VERSION=recommended
   export BOOTSTRAP_HASKELL_CABAL_VERSION=recommended
   export BOOTSTRAP_HASKELL_INSTALL_HLS=1
-  export BOOTSTRAP_HASKELL_ADJUST_BASHRC=1
+  export BOOTSTRAP_HASKELL_ADJUST_BASHRC=0
 
   echo "Installing GHCup, the Haskell toolchain installer..."
   curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
+
+  ensure_export_path
 }
 
 # The main function that runs all the initialization steps
@@ -457,6 +459,7 @@ main() {
 
   for step in "${steps_to_execute[@]}"; do
     if [ "$SKIP_PROMPT" = "yes" ]; then
+      echo "Executing $step"
       $step
     else
       read -r -p "Execute $step? [Y/n] " answer
