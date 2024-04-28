@@ -1,6 +1,7 @@
 MPV_DIR := $(HOME)/.config/mpv
 
 install-mpv:
+        mkdir -p $(MPV_DIR)
 	ln -sfn $(CURDIR)/input.conf $(MPV_DIR)/input.conf
 	ln -sfn $(CURDIR)/mpv.conf $(MPV_DIR)/mpv.conf
 
