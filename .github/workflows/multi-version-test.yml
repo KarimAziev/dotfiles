@@ -1,0 +1,41 @@
+name: Dotfiles Multi-Version CI
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+jobs:
+  test-on-ubuntu-22:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Run install script on Ubuntu 22.04
+      run: |
+        chmod +x ./install.sh
+        ./install.sh --non-interactive
+    - name: Apply dotfiles configurations on Ubuntu 22.04
+      run: make install
+
+  test-on-ubuntu-24:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Set up Docker for Ubuntu 24.04
+      uses: addnab/docker-run-action@v3
+      with:
+        image: ubuntu:24.04
+        options: -v ${{ github.workspace }}:/workspace
+        run: |
+          apt update
+          apt install -y sudo apt-transport-https curl gnupg
+          cd /workspace
+          chmod +x ./install.sh
+          ./install.sh --non-interactive
+    - name: Apply dotfiles configurations on Ubuntu 24.04
+      run: |
+        docker run -v ${{ github.workspace }}:/workspace ubuntu:24.04 /bin/bash -c "cd /workspace && make install"
