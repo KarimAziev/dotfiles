@@ -175,8 +175,12 @@ init_pkgs() {
 
     # simple configuration storage system - graphical editor
     dconf-editor
+
     # multimedia framework to decode, encode, transcode, mux, demux, stream, filter and play
     ffmpeg
+
+    # zip: a compression and file packaging utility
+    zip
   )
   apt_install_pkgs "${pkgs[@]}"
 }
