@@ -32,7 +32,7 @@ jobs:
         options: -v ${{ github.workspace }}:/workspace -e CI=true
         run: |
           apt update
-          apt install -y sudo apt-transport-https curl gnupg
+          apt install -y sudo apt-transport-https curl gnupg software-properties-common
           cd /workspace
           chmod +x ./install.sh
           ./install.sh --non-interactive

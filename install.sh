@@ -21,7 +21,7 @@ done
 
 bootstrap() {
   sudo apt-get update
-  sudo apt-get install --assume-yes wget apt-transport-https curl gnupg
+  sudo apt-get install --assume-yes wget apt-transport-https curl gnupg software-properties-common
 }
 
 # Function to check whether a package is installed
