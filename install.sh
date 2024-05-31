@@ -17,9 +17,20 @@ for arg in "$@"; do
   fi
 done
 
+bootstrap() {
+  sudo apt-get update
+  sudo apt-get install --assume-yes wget apt-transport-https curl gnupg
+}
+
 # Function to check whether a package is installed
 installed() {
-  dpkg-query -W -f='${Status}\n' "${1}" 2> /dev/null | awk '/ok installed/{print 0;exit}{print 1}'
+  if dpkg-query -W -f='${Status}\n' "$1" 2> /dev/null | grep -q "install ok installed"; then
+    echo "$1 is already installed."
+    return 0
+  else
+    echo "$1 is not installed."
+    return 1
+  fi
 }
 
 # Add apt repositories if already not added
@@ -39,7 +50,12 @@ apt_add_repos() {
 apt_install_pkgs() {
   local pkgs=("$@")
   for pkg in "${pkgs[@]}"; do
-    if ! (installed "$pkg"); then
+    if ! apt-cache show "$pkg" > /dev/null 2>&1; then
+      echo "Package $pkg is not available in the repository, skipping installation."
+      continue
+    fi
+    if ! installed "$pkg"; then
+      echo "Installing package $pkg..."
       sudo apt-get install --assume-yes "$pkg"
     fi
   done
@@ -465,6 +481,8 @@ init_ghcup() {
 
 # The main function that runs all the initialization steps
 main() {
+  bootstrap
+
   local steps_to_execute
 
   # If "--non-interactive" is among the arguments, ignore it when assigning steps
