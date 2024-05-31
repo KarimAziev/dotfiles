@@ -270,11 +270,16 @@ init_google_session_dump() {
 
 init_mu4e_deps() {
   local pkgs=(
-    # meson: high-productivity build system
+    # build-essential: Provides compilers (like `gcc`), libraries (like `libc6-dev`), and tools such as `make`
+    build-essential
+    # meson: High-productivity build system
     meson
     # gir1.2-glib-2.0: Introspection data for GLib, GObject, Gio and GModule
     gir1.2-glib-2.0
+    # gmime-3.0: Library used for handling MIME messages
     gmime-3.0
+    # libgmime-3.0-dev: The development package for GMime 3.0
+    libgmime-3.0-dev
     # libxapian-dev: Development files for Xapian search engine library
     libxapian-dev
     # libxapian30: Search engine library
