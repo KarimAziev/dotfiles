@@ -36,6 +36,4 @@ jobs:
           cd /workspace
           chmod +x ./install.sh
           ./install.sh --non-interactive
-    - name: Apply dotfiles configurations on Ubuntu 24.04
-      run: |
-        docker run -v ${{ github.workspace }}:/workspace ubuntu:24.04 /bin/bash -c "cd /workspace && make install"
+          make install
