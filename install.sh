@@ -93,6 +93,9 @@ init_pkgs() {
     # vlc: multimedia player and streamer
     vlc
 
+    # yt-dlp: downloader of videos from YouTube and other sites
+    yt-dlp
+
     # hunspell: spell checker and morphological analyzer (program)
     hunspell
 
@@ -177,7 +180,6 @@ init_pkgs() {
     ffmpeg
   )
   apt_install_pkgs "${pkgs[@]}"
-  init_youtube_dl
 }
 
 # These functions initialize various tools and utilities as needed
@@ -482,15 +484,6 @@ init_ghcup() {
   curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
 
   ensure_export_path
-}
-
-# downloader of videos from YouTube and other sites
-init_youtube_dl() {
-  if ! command -v youtube-dl &> /dev/null; then
-    echo "installing youtube-dl"
-    wget https://yt-dl.org/downloads/latest/youtube-dl -O /usr/local/bin/youtube-dl
-    chmod a+rx /usr/local/bin/youtube-dl
-  fi
 }
 
 # The main function that runs all the initialization steps
