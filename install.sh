@@ -2,6 +2,8 @@
 
 set -e
 
+export DEBIAN_FRONTEND=noninteractive
+
 # Define the steps of initialization
 declare -a steps=(init_git init_pkgs init_nvm init_google_chrome init_google_session_dump
   init_mu4e_deps remap_caps init_emacs init_emacs_gtk_theme init_pass_extension
