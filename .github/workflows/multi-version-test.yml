@@ -29,7 +29,7 @@ jobs:
       uses: addnab/docker-run-action@v3
       with:
         image: ubuntu:24.04
-        options: -v ${{ github.workspace }}:/workspace
+        options: -v ${{ github.workspace }}:/workspace -e CI=true
         run: |
           apt update
           apt install -y sudo apt-transport-https curl gnupg
