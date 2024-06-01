@@ -1,4 +1,4 @@
-MODULES := bash mpv viewnior
+MODULES := bash mpv viewnior gnupg
 
 .PHONY: $(MODULES) install clean
 
