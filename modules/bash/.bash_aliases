@@ -14,4 +14,3 @@ alias mu='/usr/local/bin/mu'
 alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'
-alias python="python3"
