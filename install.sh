@@ -365,6 +365,7 @@ init_flacon() {
 }
 
 write_gpg_agent_conf() {
+  local gpg_dir="${GNUPGHOME:-$HOME/.gnupg}"
   local gpg_agent_conf="$HOME/.gnupg/gpg-agent.conf"
   local pinentry_path="/usr/bin/pinentry-gnome3"
 
@@ -374,9 +375,12 @@ write_gpg_agent_conf() {
     return 1
   fi
 
-  # Check if gpg-agent.conf exists
-  if [[ -f "$gpg_agent_conf" ]]; then
-    # Write the desired settings to the config file
+  if [[ ! -d "$gpg_dir" ]]; then
+    mkdir -p "$gpg_dir"
+    chmod 700 "$gpg_dir"
+  fi
+
+  if [[ ! -s "$gpg_agent_conf" ]]; then
     cat > "$gpg_agent_conf" << EOF
 pinentry-program /usr/bin/pinentry-gnome3
 allow-emacs-pinentry
