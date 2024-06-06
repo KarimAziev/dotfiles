@@ -437,6 +437,8 @@ init_pyenv() {
       # shellcheck disable=SC2016 # avoid SC2016 by using intended single quotes
       echo 'eval "$(pyenv init --path)"'
       # shellcheck disable=SC2016 # avoid SC2016 by using intended single quotes
+      echo 'eval "$(pyenv init -)"'
+      # shellcheck disable=SC2016 # avoid SC2016 by using intended single quotes
       echo 'eval "$(pyenv virtualenv-init -)"'
       echo ''
     } >> ~/.bashrc

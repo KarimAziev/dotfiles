@@ -107,6 +107,7 @@ fi
 # Python Version Manager (pyenv) installation and setup
 export PATH="$HOME/.pyenv/bin:$PATH"
 eval "$(pyenv init --path)"
+eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 
 # Java Version Manager (SDKMAN) installation and setup
