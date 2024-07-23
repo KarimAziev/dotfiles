@@ -11,11 +11,12 @@ The setup is divided into two main parts:
 
 **Table of Contents**
 
-- [About](#about)
-  - [Usage](#usage)
-    - [Automated Setup with `install.sh`](#automated-setup-with-installsh)
-    - [Configuring Dotfiles with Make](#configuring-dotfiles-with-make)
-- [Commands](#commands)
+> - [About](#about)
+>   - [Usage](#usage)
+>     - [Automated Setup with `install.sh`](#automated-setup-with-installsh)
+>     - [Configuring Dotfiles with Make](#configuring-dotfiles-with-make)
+> - [Commands](#commands)
+> - [Packages to install](#packages-to-install)
 
 <!-- markdown-toc end -->
 
@@ -82,47 +83,7 @@ make clean-bash
 Here are some commands that the script can execute:
 
 - `init_git`: Install git and configure the default branch.
-- `init_pkgs`: Install necessary packages:
-  | Package | Description |
-  | ----------------- | ----------------------------------------------------------------- |
-  | dconf-editor | Simple configuration storage system - graphical editor |
-  | pass | Lightweight directory-based password manager |
-  | gh | GitHub CLI, GitHub’s official command line tool |
-  | tlp | Optimize laptop battery life |
-  | bear | Generate compilation database for Clang tooling |
-  | clangd | Language server that provides IDE-like features to editors |
-  | bmon | Portable bandwidth monitor and rate estimator |
-  | synapse | Semantic file launcher |
-  | tree | Displays an indented directory tree, in color |
-  | sysstat | System performance tools for Linux |
-  | fonts-arphic-ukai | "AR PL UKai" Chinese Unicode TrueType font collection Kaiti style |
-  | fonts-noto | metapackage to pull in all Noto fonts |
-  | nmap | The Network Mapper |
-  | command-not-found | Suggest installation of packages in interactive bash sessions |
-  | htop | interactive processes viewer |
-  | smartmontools | Control and monitor storage systems using S.M.A.R.T. |
-  | indent | C language source code formatting program |
-  | ditaa | convert ASCII diagrams into proper bitmap graphics |
-  | net-tools | NET-3 networking toolkit |
-  | wget | Retrieves files from the web |
-  | curl | Command line tool for transferring data with URL syntax |
-  | libtool-bin | Generic library support script (libtool binary) |
-  | libtool | Generic library support script |
-  | cmake | Cross-platform, open-source make system |
-  | mpv | Video player based on MPlayer/mplayer2 |
-  | w3m | WWW browsable pager with excellent tables/frames support |
-  | hunspell | Spell checker and morphological analyzer (program) |
-  | youtube-dl | Downloader of videos from YouTube and other sites |
-  | vlc | Multimedia player and streamer |
-  | viewnior | Simple, fast and elegant image viewer |
-  | fd-find | Simple, fast and user-friendly alternative to find |
-  | jq | Lightweight and flexible command-line JSON processor |
-  | xclip | Command line interface to X selections |
-  | pandoc | General markup converter |
-  | silversearcher-ag | Very fast grep-like program, alternative to ack-grep |
-  | rlwrap | Readline feature command line wrapper |
-  | tmux | Terminal multiplexer |
-
+- `init_pkgs`: Install necessary packages. See [below](#packages-to-install).
 - `init_nvm`: Install Node Version Manager if it's not installed.
 - `init_pyenv`: Install Python Version Manager if it's not installed.
 - `init_sdkman`: Install Java Version Manager if it's not installed.
@@ -137,9 +98,58 @@ Here are some commands that the script can execute:
 - `init_flacon`: Install Flacon Audio File Encoder.
 - `init_ghcup`: Install GHCup, the Haskell toolchain installer.
 - `ensure_export_path`: Ensure the export PATH commands are moved to the end of `.bashrc`.
+- `init_rust`: Install the Rust toolchain.
+- `install_emacs_lsp_booster`: Install [Emacs LSP performance booster](https://github.com/blahgeek/emacs-lsp-booster).
 
 To see all the available commands and options, use:
 
 ```shell
 ./install.sh --help
 ```
+
+# Packages to install
+
+The following packages will be installed by the `init_pkgs` step:
+
+| Package           | Description                                                                            |
+| ----------------- | -------------------------------------------------------------------------------------- |
+| tmux              | Terminal multiplexer                                                                   |
+| rlwrap            | Readline feature command line wrapper                                                  |
+| silversearcher-ag | Very fast grep-like program, alternative to ack-grep                                   |
+| pandoc            | General markup converter                                                               |
+| xclip             | Command line interface to X selections                                                 |
+| jq                | Lightweight and flexible command-line JSON processor                                   |
+| fd-find           | Simple, fast and user-friendly alternative to find                                     |
+| viewnior          | Simple, fast and elegant image viewer                                                  |
+| vlc               | Multimedia player and streamer                                                         |
+| yt-dlp            | Downloader of videos from YouTube and other sites                                      |
+| hunspell          | Spell checker and morphological analyzer (program)                                     |
+| w3m               | WWW browsable pager with excellent tables/frames support                               |
+| mpv               | Video player based on MPlayer/mplayer2                                                 |
+| cmake             | Cross-platform, open-source make system                                                |
+| libtool           | Generic library support script                                                         |
+| libtool-bin       | Generic library support script (libtool binary)                                        |
+| curl              | Command line tool for transferring data with URL syntax                                |
+| wget              | Retrieves files from the web                                                           |
+| net-tools         | NET-3 networking toolkit                                                               |
+| ditaa             | Convert ASCII diagrams into proper bitmap graphics                                     |
+| indent            | C language source code formatting program                                              |
+| smartmontools     | Control and monitor storage systems using S.M.A.R.T.                                   |
+| htop              | Interactive processes viewer                                                           |
+| command-not-found | Suggest installation of packages in interactive bash sessions                          |
+| nmap              | The Network Mapper                                                                     |
+| fonts-noto        | Metapackage to pull in all Noto fonts                                                  |
+| fonts-arphic-ukai | "AR PL UKai" Chinese Unicode TrueType font collection Kaiti style                      |
+| sysstat           | System performance tools for Linux                                                     |
+| tree              | Displays an indented directory tree, in color                                          |
+| synapse           | Semantic file launcher                                                                 |
+| bmon              | Portable bandwidth monitor and rate estimator                                          |
+| clangd            | Language server that provides IDE-like features to editors                             |
+| bear              | Generate compilation database for Clang tooling                                        |
+| tlp               | Optimize laptop battery life                                                           |
+| gh                | GitHub CLI, GitHub’s official command line tool                                        |
+| pass              | Lightweight directory-based password manager                                           |
+| dconf-editor      | Simple configuration storage system - graphical editor                                 |
+| ffmpeg            | Multimedia framework to decode, encode, transcode, mux, demux, stream, filter and play |
+| zip               | A compression and file packaging utility                                               |
+| make              | Build utility for managing and executing build processes                               |
