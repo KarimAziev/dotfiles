@@ -104,6 +104,8 @@ if type npm &> /dev/null && type complete &> /dev/null; then
   fi
 fi
 
+export LSP_USE_PLISTS=true
+
 # Python Version Manager (pyenv) installation and setup
 export PATH="$HOME/.pyenv/bin:$PATH"
 eval "$(pyenv init --path)"
