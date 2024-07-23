@@ -184,7 +184,7 @@ init_pkgs() {
     # zip: a compression and file packaging utility
     zip
 
-    # make
+    # make: build utility for managing and executing build processes
     make
   )
   apt_install_pkgs "${pkgs[@]}"
