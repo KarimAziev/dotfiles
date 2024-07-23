@@ -78,6 +78,7 @@ if [ -f "$HOME/.bash_aliases" ]; then
 fi
 
 # Load Rust environment.
+# shellcheck disable=SC1091
 [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 
 # Custom PATH settings for local installs and user-specific programs.
