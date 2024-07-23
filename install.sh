@@ -6,7 +6,9 @@ export DEBIAN_FRONTEND=noninteractive
 
 # Define the steps of initialization
 declare -a steps=(init_git init_pkgs init_nvm init_google_chrome init_google_session_dump
-  init_mu4e_deps remap_caps init_emacs init_emacs_gtk_theme init_avidemux init_flacon init_pyenv init_sdkman init_ghcup ensure_export_path)
+  init_mu4e_deps remap_caps init_rust install_emacs_lsp_booster init_emacs
+  init_emacs_gtk_theme init_avidemux init_flacon init_pyenv init_sdkman
+  init_ghcup ensure_export_path)
 
 # Set default prompt option
 SKIP_PROMPT="no"
@@ -499,7 +501,72 @@ init_ghcup() {
   ensure_export_path
 }
 
-# The main function that runs all the initialization steps
+init_rust() {
+  if ! command -v rustup &> /dev/null; then
+    echo "Installing Rust toolchain..."
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+    if [ -f "$HOME/.cargo/env" ]; then
+      # shellcheck disable=SC1091
+      source "$HOME/.cargo/env"
+    fi
+  else
+    echo "Rust toolchain is already installed."
+  fi
+
+  if ! grep -q 'rustup autocomplete' ~/.bashrc; then
+    {
+      echo ''
+      echo '# Rust toolchain initialization and setup'
+      # shellcheck disable=SC2016
+      echo 'source "$HOME/.cargo/env"'
+    } >> ~/.bashrc
+  fi
+}
+
+install_emacs_lsp_booster() {
+  if ! command -v cargo &> /dev/null; then
+    echo "Rust toolchain is not installed. Installing Rust..."
+    init_rust
+  else
+    echo "Rust toolchain is already installed."
+  fi
+
+  if [ ! -d "$HOME/emacs-lsp-booster" ]; then
+    echo "Cloning emacs-lsp-booster repository..."
+    git clone https://github.com/blahgeek/emacs-lsp-booster.git "$HOME/emacs-lsp-booster"
+  else
+    echo "emacs-lsp-booster repository already exists."
+  fi
+
+  cd "$HOME/emacs-lsp-booster" || {
+    echo "Failed to enter the emacs-lsp-booster directory"
+    exit 1
+  }
+  echo "Building emacs-lsp-booster..."
+  cargo build --release
+
+  echo "Setting up the emacs-lsp-booster binary..."
+  local dest_dir="$HOME/.local/bin"
+
+  if [ ! -d "$dest_dir" ]; then
+    mkdir -p "$dest_dir"
+  fi
+
+  cp target/release/emacs-lsp-booster "$dest_dir/"
+
+  if ! echo "$PATH" | grep -q "$dest_dir"; then
+    echo "Adding $dest_dir to PATH in .bashrc"
+    # shellcheck disable=SC2016
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
+    # shellcheck disable=SC1090,SC1091
+    source "$HOME/.bashrc"
+  fi
+
+  echo "emacs-lsp-booster has been installed successfully."
+}
+
+# The main ftunction that runs all the initialization steps
 main() {
   bootstrap
 
@@ -532,26 +599,28 @@ show_help() {
   echo "Initializes various tools and utilities on a new machine."
   echo
   echo "Options:"
-  echo "-y, --non-interactive    Run script without prompting for confirmation."
-  echo "-h, --help               Show help and exit."
+  echo "-y, --non-interactive     Run script without prompting for confirmation."
+  echo "-h, --help                Show help and exit."
   echo
   echo "Commands:"
-  echo "init_git                 Initialize git by installing it and configuring default branch."
-  echo "init_pkgs                Install necessary packages"
-  echo "init_nvm                 Install Node Version Manager if not already installed."
-  echo "init_pyenv               Install Python Version Manager if not already installed."
-  echo "init_sdkman              Install Java Version Manager if not already installed."
-  echo "init_google_chrome       Download and install Google Chrome."
-  echo "init_google_session_dump Install Google Session Dump."
-  echo "init_mu4e_deps           Install dependencies for mu4e."
-  echo "remap_caps               Remap Caps Lock to Control key."
-  echo "init_emacs               Install Emacs if not already installed."
-  echo "init_emacs_gtk_theme     Set Emacs as the GTK theme."
-  echo "init_pass_extension      Install Pass password manager extension."
-  echo "init_avidemux            Install avidemux video editing software."
-  echo "init_flacon              Install Flacon Audio File Encoder."
-  echo "init_ghcup               Install GHCup, the Haskell toolchain installer."
-  echo "ensure_export_path       Ensure the export PATH commands are moved to the end of .bashrc."
+  echo "init_git                  Initialize git by installing it and configuring default branch."
+  echo "init_pkgs                 Install necessary packages"
+  echo "init_nvm                  Install Node Version Manager if not already installed."
+  echo "init_pyenv                Install Python Version Manager if not already installed."
+  echo "init_sdkman               Install Java Version Manager if not already installed."
+  echo "init_google_chrome        Download and install Google Chrome."
+  echo "init_google_session_dump  Install Google Session Dump."
+  echo "init_mu4e_deps            Install dependencies for mu4e."
+  echo "remap_caps                Remap Caps Lock to Control key."
+  echo "init_emacs                Install Emacs if not already installed."
+  echo "init_emacs_gtk_theme      Set Emacs as the GTK theme."
+  echo "init_pass_extension       Install Pass password manager extension."
+  echo "init_avidemux             Install avidemux video editing software."
+  echo "init_flacon               Install Flacon Audio File Encoder."
+  echo "init_ghcup                Install GHCup, the Haskell toolchain installer."
+  echo "ensure_export_path        Ensure the export PATH commands are moved to the end of .bashrc."
+  echo "init_rust                 Install the Rust toolchain."
+  echo "install_emacs_lsp_booster Install Emacs LSP performance booster."
   echo
   echo "To invoke multiple commands, space-separate them."
   echo "Example: $(basename "$0") init_git init_nvm"
