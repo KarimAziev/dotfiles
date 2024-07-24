@@ -186,6 +186,9 @@ init_pkgs() {
 
     # make: build utility for managing and executing build processes
     make
+
+    # direnv: unloads and reloads environment variables based on directory-level configuration files
+    direnv
   )
   apt_install_pkgs "${pkgs[@]}"
 }
