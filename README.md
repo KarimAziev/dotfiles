@@ -100,6 +100,7 @@ Here are some commands that the script can execute:
 - `ensure_export_path`: Ensure the export PATH commands are moved to the end of `.bashrc`.
 - `init_rust`: Install the Rust toolchain.
 - `install_emacs_lsp_booster`: Install [Emacs LSP performance booster](https://github.com/blahgeek/emacs-lsp-booster).
+- `init_docker`: Install docker.
 
 To see all the available commands and options, use:
 
@@ -153,3 +154,4 @@ The following packages will be installed by the `init_pkgs` step:
 | ffmpeg            | Multimedia framework to decode, encode, transcode, mux, demux, stream, filter and play |
 | zip               | A compression and file packaging utility                                               |
 | make              | Build utility for managing and executing build processes                               |
+| direnv            | Unloads and reloads environment variables based on directory-level configuration files |
