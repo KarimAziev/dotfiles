@@ -68,10 +68,6 @@ fi
 GPG_TTY=$(tty)
 export GPG_TTY
 
-# Set Docker host to allow non-root user access.
-DOCKER_HOST="unix:///run/user/$(id -u)/docker.sock"
-export DOCKER_HOST
-
 # Load .bash_aliases if it exists.
 if [ -f "$HOME/.bash_aliases" ]; then
   . "$HOME/.bash_aliases"
