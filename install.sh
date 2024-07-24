@@ -597,6 +597,36 @@ main() {
   done
 }
 
+init_docker() {
+  # Uninstall all conflicting packages:
+  for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove -y $pkg; done
+
+  sudo apt-get update
+  sudo apt-get install -y ca-certificates curl gnupg
+  sudo install -m 0755 -d /etc/apt/keyrings
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo tee /etc/apt/keyrings/docker.asc > /dev/null
+  echo \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+    $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+    | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+  sudo apt-get update
+  sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+  sudo docker run hello-world
+
+  # Set up Docker to be used without sudo
+  sudo groupadd docker || true
+  sudo usermod -aG docker "$USER"
+
+  # Apply the group change
+  newgrp docker
+
+  # Fix permissions of the Docker config directory if there are issues
+  sudo chown "$USER":"$USER" /home/"$USER"/.docker -R || true
+  sudo chmod g+rwx "$HOME/.docker" -R || true
+}
+
 show_help() {
   echo "Usage: $(basename "$0") [OPTIONS] [COMMANDS]"
   echo "Initializes various tools and utilities on a new machine."
@@ -624,6 +654,7 @@ show_help() {
   echo "ensure_export_path        Ensure the export PATH commands are moved to the end of .bashrc."
   echo "init_rust                 Install the Rust toolchain."
   echo "install_emacs_lsp_booster Install Emacs LSP performance booster."
+  echo "init_docker               Install Docker"
   echo
   echo "To invoke multiple commands, space-separate them."
   echo "Example: $(basename "$0") init_git init_nvm"
