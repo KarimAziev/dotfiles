@@ -113,6 +113,8 @@ eval "$(pyenv init --path)"
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 
+eval "$(direnv hook bash)"
+
 # Java Version Manager (SDKMAN) installation and setup
 # shellcheck disable=SC1090,SC1091
 export SDKMAN_DIR="$HOME/.sdkman"
