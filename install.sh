@@ -8,7 +8,7 @@ export DEBIAN_FRONTEND=noninteractive
 declare -a steps=(init_git init_pkgs init_nvm init_google_chrome init_google_session_dump
   init_mu4e_deps remap_caps init_rust install_emacs_lsp_booster init_emacs
   init_emacs_gtk_theme init_avidemux init_flacon init_pyenv init_sdkman
-  init_ghcup ensure_export_path)
+  init_ghcup init_docker ensure_export_path)
 
 # Set default prompt option
 SKIP_PROMPT="no"
