@@ -268,8 +268,8 @@ fi"
   if ! grep -q 'npm completion' "$HOME/.bashrc"; then
     echo "$NPM_COMPLETION_LINES" >> "$HOME/.bashrc"
   fi
+  wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
 
-  wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 }
 
 init_google_chrome() {
