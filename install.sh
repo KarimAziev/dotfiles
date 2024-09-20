@@ -197,6 +197,7 @@ init_pkgs() {
 init_git() {
   sudo apt-get install -y git
   git config --global init.defaultBranch main
+  git config --global pull.ff only
 }
 
 init_emacs() {
