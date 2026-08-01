@@ -89,6 +89,7 @@ jobs:
 
           for brewfile in \
             Brewfile \
+            Brewfile.gnupg \
             Brewfile.media \
             Brewfile.cad \
             Brewfile.ai \
@@ -132,12 +133,20 @@ jobs:
           fi
 
           grep -Fq 'cask "docker-desktop"' Brewfile
+          if grep -Fq 'brew "gnupg"' Brewfile; then
+            echo "The optional GPG stack leaked into the core Brewfile" >&2
+            exit 1
+          fi
+          grep -Fq 'brew "gnupg"' Brewfile.gnupg
+          grep -Fq 'brew "pinentry-mac"' Brewfile.gnupg
           grep -Fq 'brew "ffmpeg"' Brewfile.media
           grep -Fq 'brew "mpv"' Brewfile.media
 
       - name: Validate command-line behavior
         run: |
           /bin/bash ./install-macos.sh --help >/dev/null
+          grep -Fq 'ASSUME_YES=true' install-macos.sh
+          grep -Fq -- '--ask' < <(/bin/bash ./install-macos.sh --help)
 
           if /bin/bash ./install-macos.sh \
             --dry-run --yes --profile nonsense \
@@ -162,9 +171,14 @@ jobs:
 
           HOME="$isolated_home" /bin/bash ./install-macos.sh \
             --dry-run \
-            --yes \
             --profile developer \
             >"$RUNNER_TEMP/developer-dry-run.log" 2>&1
+
+          HOME="$isolated_home" /bin/bash ./install-macos.sh \
+            --dry-run \
+            --profile developer \
+            --skip-gpg \
+            >"$RUNNER_TEMP/girlfriend-dry-run.log" 2>&1
 
           HOME="$isolated_home" /bin/bash ./install-macos.sh \
             --dry-run \
@@ -172,11 +186,24 @@ jobs:
             --profile personal \
             --skip-emacs \
             --skip-dropbox \
+            --skip-gpg \
             >"$RUNNER_TEMP/personal-dry-run.log" 2>&1
 
           grep -Fq "Dry-run complete; no requested mutations were executed." \
             "$RUNNER_TEMP/developer-dry-run.log"
-          grep -Fq "emacs=false dropbox=false" \
+          grep -Fq "emacs=false dropbox=false gpg=false" \
+            "$RUNNER_TEMP/girlfriend-dry-run.log"
+          grep -Fq "Skipping GnuPG and pinentry configuration." \
+            "$RUNNER_TEMP/girlfriend-dry-run.log"
+          if grep -Fq "Brewfile.gnupg" "$RUNNER_TEMP/girlfriend-dry-run.log"; then
+            echo "Girlfriend profile unexpectedly scheduled the GPG Brewfile" >&2
+            exit 1
+          fi
+          grep -Fq "Dry-run complete; no requested mutations were executed." \
+            "$RUNNER_TEMP/girlfriend-dry-run.log"
+          grep -Fq "emacs=false dropbox=false gpg=false" \
+            "$RUNNER_TEMP/personal-dry-run.log"
+          grep -Fq "Skipping GnuPG and pinentry configuration." \
             "$RUNNER_TEMP/personal-dry-run.log"
           grep -Fq "Dry-run complete; no requested mutations were executed." \
             "$RUNNER_TEMP/personal-dry-run.log"

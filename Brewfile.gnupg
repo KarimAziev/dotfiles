@@ -1,0 +1,8 @@
+# Optional GnuPG/password-store stack. macOS Keychain and ordinary SSH usage do
+# not require any of these packages.
+
+brew "gnupg"
+brew "pass"
+brew "pass-otp"
+brew "pinentry-mac"
+brew "zbar"

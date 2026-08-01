@@ -17,7 +17,9 @@ BACKUP_STAMP=$(date +%Y%m%d-%H%M%S)
 BACKUP_ROOT="$HOME/.local/state/dotfiles/backups/$BACKUP_STAMP"
 
 DRY_RUN=false
-ASSUME_YES=false
+# Noninteractive execution is the default. --ask enables one plan prompt;
+# --yes remains as an explicit/compatibility spelling of the default.
+ASSUME_YES=true
 PROFILE=developer
 PYTHON_MANAGER=pyenv
 PYTHON_VERSION=3.12
@@ -33,6 +35,7 @@ ONLY_PHASES=
 
 WITH_EMACS=auto
 WITH_DROPBOX=auto
+WITH_GPG=auto
 WITH_MEDIA=auto
 WITH_CAD=auto
 WITH_AI=auto
@@ -133,7 +136,8 @@ Profiles:
 General options:
   -p, --profile PROFILE          developer or personal (default: developer)
   -n, --dry-run                  Print mutating commands without executing them
-  -y, --yes                      Skip the script's one confirmation prompt
+  -y, --yes                      Proceed without confirmation (the default)
+      --ask                      Require confirmation after printing the plan
   -o, --only PHASES             Comma-separated: defaults,packages,toolchains,
                                 dotfiles,apps,verify
       --skip-defaults            Do not apply macOS defaults
@@ -150,7 +154,7 @@ Runtime options:
       --skip-rust                Skip rustup setup
 
 Optional groups (each supports --with-NAME and --skip-NAME):
-  emacs, dropbox, media, cad, ai, desktop, xcode, alttab
+  emacs, dropbox, gpg, media, cad, ai, desktop, xcode, alttab
 
 Application archive options:
       --alttab-archive PATH      AltTab .zip archive
@@ -162,9 +166,10 @@ Application archive options:
 
 Examples:
   ./install-macos.sh --dry-run
-  ./install-macos.sh --profile personal --skip-emacs --skip-dropbox
+  ./install-macos.sh --profile developer --skip-gpg
+  ./install-macos.sh --profile personal --skip-emacs --skip-dropbox --skip-gpg
   ./install-macos.sh --with-media --python-manager uv
-  ./install-macos.sh --only dotfiles --yes
+  ./install-macos.sh --only dotfiles --ask
 EOF
 }
 
@@ -192,6 +197,10 @@ parse_args() {
         ;;
       -y | --yes)
         ASSUME_YES=true
+        shift
+        ;;
+      --ask)
+        ASSUME_YES=false
         shift
         ;;
       -o | --only)
@@ -258,6 +267,8 @@ parse_args() {
       --skip-emacs) WITH_EMACS=false; shift ;;
       --with-dropbox) WITH_DROPBOX=true; shift ;;
       --skip-dropbox) WITH_DROPBOX=false; shift ;;
+      --with-gpg) WITH_GPG=true; shift ;;
+      --skip-gpg) WITH_GPG=false; shift ;;
       --with-media) WITH_MEDIA=true; shift ;;
       --skip-media) WITH_MEDIA=false; shift ;;
       --with-cad) WITH_CAD=true; shift ;;
@@ -330,6 +341,7 @@ set_profile_defaults() {
     developer)
       [[ $WITH_EMACS == auto ]] && WITH_EMACS=false
       [[ $WITH_DROPBOX == auto ]] && WITH_DROPBOX=false
+      [[ $WITH_GPG == auto ]] && WITH_GPG=true
       [[ $WITH_MEDIA == auto ]] && WITH_MEDIA=false
       [[ $WITH_CAD == auto ]] && WITH_CAD=false
       [[ $WITH_AI == auto ]] && WITH_AI=false
@@ -340,6 +352,7 @@ set_profile_defaults() {
     personal)
       [[ $WITH_EMACS == auto ]] && WITH_EMACS=true
       [[ $WITH_DROPBOX == auto ]] && WITH_DROPBOX=true
+      [[ $WITH_GPG == auto ]] && WITH_GPG=true
       [[ $WITH_MEDIA == auto ]] && WITH_MEDIA=true
       [[ $WITH_CAD == auto ]] && WITH_CAD=true
       [[ $WITH_AI == auto ]] && WITH_AI=true
@@ -402,7 +415,7 @@ preflight() {
   log_info "Profile: $PROFILE"
   log_info "Python: $PYTHON_MANAGER $PYTHON_VERSION"
   log_info "Node: $NODE_VERSION"
-  log_info "Optional groups: emacs=$WITH_EMACS dropbox=$WITH_DROPBOX media=$WITH_MEDIA cad=$WITH_CAD ai=$WITH_AI desktop=$WITH_DESKTOP xcode=$WITH_XCODE alttab=$WITH_ALTTAB"
+  log_info "Optional groups: emacs=$WITH_EMACS dropbox=$WITH_DROPBOX gpg=$WITH_GPG media=$WITH_MEDIA cad=$WITH_CAD ai=$WITH_AI desktop=$WITH_DESKTOP xcode=$WITH_XCODE alttab=$WITH_ALTTAB"
   [[ -n $ONLY_PHASES ]] && log_info "Selected phases: $ONLY_PHASES"
   [[ $BREW_UPDATE == true ]] && log_warn "An explicit Homebrew update was requested."
 
@@ -509,6 +522,7 @@ install_packages() {
   fi
 
   install_brewfile "$SCRIPT_DIR/Brewfile"
+  [[ $WITH_GPG == true ]] && install_brewfile "$SCRIPT_DIR/Brewfile.gnupg"
   [[ $WITH_MEDIA == true ]] && install_brewfile "$SCRIPT_DIR/Brewfile.media"
   [[ $WITH_CAD == true ]] && install_brewfile "$SCRIPT_DIR/Brewfile.cad"
   [[ $WITH_AI == true ]] && install_brewfile "$SCRIPT_DIR/Brewfile.ai"
@@ -635,7 +649,11 @@ install_dotfiles() {
   else
     install_managed_copy "$karabiner_source" "$karabiner_destination"
   fi
-  install_gpg_agent_config
+  if [[ $WITH_GPG == true ]]; then
+    install_gpg_agent_config
+  else
+    log_info "Skipping GnuPG and pinentry configuration."
+  fi
 }
 
 install_nvm_and_node() {
@@ -941,8 +959,10 @@ verify_setup() {
   verify_command docker
   verify_command node
   verify_command uv
-  verify_command gpg
-  verify_command pass
+  if [[ $WITH_GPG == true ]]; then
+    verify_command gpg
+    verify_command pass
+  fi
 
   if [[ $PYTHON_MANAGER == pyenv && $SKIP_PYTHON == false ]]; then
     verify_command pyenv
