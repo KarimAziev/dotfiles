@@ -521,6 +521,11 @@ install_packages() {
     brew_run update
   fi
 
+  # Homebrew requires explicit trust before Bundle evaluates third-party tap
+  # formulae. Trust only Terraform rather than every item in HashiCorp's tap.
+  brew_run tap hashicorp/tap
+  brew_run trust --formula hashicorp/tap/terraform
+
   install_brewfile "$SCRIPT_DIR/Brewfile"
   [[ $WITH_GPG == true ]] && install_brewfile "$SCRIPT_DIR/Brewfile.gnupg"
   [[ $WITH_MEDIA == true ]] && install_brewfile "$SCRIPT_DIR/Brewfile.media"

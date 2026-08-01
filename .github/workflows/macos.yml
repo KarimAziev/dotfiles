@@ -133,6 +133,9 @@ jobs:
           fi
 
           grep -Fq 'cask "docker-desktop"' Brewfile
+          grep -Fq 'brew_run tap hashicorp/tap' install-macos.sh
+          grep -Fq 'brew_run trust --formula hashicorp/tap/terraform' \
+            install-macos.sh
           if grep -Fq 'brew "gnupg"' Brewfile; then
             echo "The optional GPG stack leaked into the core Brewfile" >&2
             exit 1
