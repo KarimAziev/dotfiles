@@ -1,0 +1,12 @@
+alias ls='ls --color=auto'
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+alias x='exit'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias fdfind='fd'
+alias pip-update='python -m pip install --upgrade pip'
+alias unfreeze_emacs='pkill -SIGUSR2 Emacs-real'
+alias emacs_unhang='pkill -SIGUSR2 Emacs-real'
+

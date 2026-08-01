@@ -1,0 +1,11 @@
+# Media tools. The mpv formula intentionally provides the CLI/libmpv only;
+# install-macos.sh handles an optional user-supplied mpv.app archive separately.
+
+brew "ffmpeg"
+brew "media-info"
+brew "mpv"
+
+cask "kid3"
+cask "qlvideo"
+cask "quicklook-video"
+

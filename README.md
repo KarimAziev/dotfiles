@@ -1,8 +1,85 @@
 # About
 
-This repository contains configurations and scripts to automate the setup of a new machine or environment on `Ubuntu 22.04`. It includes dotfiles for bash, mpv, viewnior, and several other configurations, alongside an installation script for automating the installation of necessary tools, applications, and utilities.
+This repository contains configurations and scripts to automate developer-machine setup on macOS and Ubuntu. The macOS installer is profile-based and deliberately prevents Homebrew from performing automatic updates, upgrades, cleanup, or dependency removal. The original `install.sh` and Makefile modules remain the Ubuntu setup.
 
-The setup is divided into two main parts:
+## macOS setup
+
+Clone the repository before running the macOS installer. The script uses the Brewfiles and managed configuration files beside it, so it is intentionally not a standalone `curl | bash` installer.
+
+```shell
+git clone https://github.com/KarimAziev/dotfiles.git "$HOME/src/dotfiles"
+cd "$HOME/src/dotfiles"
+./install-macos.sh --dry-run
+./install-macos.sh
+```
+
+The default `developer` profile installs the core CLI/build environment, Docker Desktop, Google Chrome, Karabiner Elements, latest Node LTS, uv, and a Python selected through pyenv by default. Optional application groups are disabled.
+
+The `personal` profile additionally enables Emacs master, Dropbox, media tools, CAD tools, local AI tools, desktop applications, and the local AltTab archive. Full Xcode remains opt-in in every profile.
+
+```shell
+# Personal setup, but without Emacs or Dropbox.
+./install-macos.sh --profile personal --skip-emacs --skip-dropbox
+
+# Core setup plus FFmpeg and the mpv CLI/libmpv.
+./install-macos.sh --with-media
+
+# Let uv manage Python versions instead of pyenv.
+./install-macos.sh --python-manager uv --python-version 3.12
+
+# Apply only managed configuration files.
+./install-macos.sh --only dotfiles --yes
+```
+
+Run `./install-macos.sh --help` for all group, archive, phase, and conflict-handling options.
+
+### Homebrew safety policy
+
+The installer exports the following variables before its first Homebrew invocation:
+
+```shell
+HOMEBREW_NO_ASK=1
+HOMEBREW_NO_AUTO_UPDATE=1
+HOMEBREW_NO_INSTALL_UPGRADE=1
+HOMEBREW_NO_INSTALL_CLEANUP=1
+HOMEBREW_NO_AUTOREMOVE=1
+HOMEBREW_NO_ENV_HINTS=1
+HOMEBREW_BUNDLE_NO_UPGRADE=1
+```
+
+Package installation uses `brew bundle install --no-upgrade`. The installer never runs `brew cleanup`, `brew autoremove`, or `brew bundle cleanup`. It runs `brew update` only when explicitly invoked with `--brew-update`.
+
+Emacs is intentionally not present in any Brewfile. Its dedicated phase installs `emacs-plus@master` only when missing and otherwise leaves it untouched. Reinstallation requires `--force-emacs-reinstall`.
+
+### macOS package groups
+
+- [Brewfile](Brewfile) contains the mandatory developer core.
+- [Brewfile.media](Brewfile.media) contains FFmpeg, the mpv formula, and media utilities. The mpv formula does not provide `mpv.app`; supply a known application archive with `--mpv-app-archive PATH` if an app bundle is required.
+- [Brewfile.cad](Brewfile.cad) contains OpenSCAD/Bambu Studio and related build tools.
+- [Brewfile.ai](Brewfile.ai) contains Ollama and llama.cpp.
+- [Brewfile.desktop](Brewfile.desktop) contains optional desktop developer applications.
+- [Brewfile.dropbox](Brewfile.dropbox) keeps Dropbox independently skippable.
+- [Brewfile.xcode](Brewfile.xcode) installs full Xcode through `mas` only when `--with-xcode` is explicitly used and the App Store is already signed in.
+
+The deprecated `stolendata-mpv` cask is not used. The media profile installs the supported Homebrew formula, which supplies the `mpv` CLI and `libmpv` but no application bundle.
+
+AltTab is not installed from Homebrew. The personal profile expects `$HOME/Dropbox/AltTab-10.4.0.zip`, verifies its pinned SHA-256, and installs the contained app. A different archive can be provided with `--alttab-archive` and `--alttab-sha256`.
+
+### Managed files and conflicts
+
+The installer manages Zsh, NVM default packages, Emacs Plus build configuration, a platform-correct GPG agent configuration, and a portable Karabiner baseline. Unknown existing Zsh/GPG files are moved to timestamped backups below:
+
+```text
+~/.local/state/dotfiles/backups/YYYYMMDD-HHMMSS/
+```
+
+Use `--fail-on-conflict` to stop instead of backing up and replacing a managed file.
+
+Karabiner is treated more conservatively because the application rewrites its JSON and personal profiles can be large. A fresh machine receives the repository baseline (Caps Lock to Control). A different existing Karabiner configuration is left untouched unless `--force-karabiner-config` is explicitly supplied; replacement still creates a backup.
+
+Sleepwatcher is installed but is not enabled and no LaunchAgent is created. Karabiner privacy permissions, Docker's first launch, Chrome's default-browser confirmation, and App Store authentication may still require macOS UI interaction.
+
+The Ubuntu setup below remains divided into two main parts:
 
 1. **Environment Setup Script (`install.sh`)**: Automates the process of installing necessary software and tools, configuring settings, and performing initial system setups like git initialization, command-line utilities, and development tools installation.
 2. **Dotfiles Configuration**: Utilizes Makefiles for modular management of configuration files, allowing for easy application, removal, and updating of dotfiles across the system.
@@ -12,6 +89,10 @@ The setup is divided into two main parts:
 **Table of Contents**
 
 > - [About](#about)
+>   - [macOS setup](#macos-setup)
+>     - [Homebrew safety policy](#homebrew-safety-policy)
+>     - [macOS package groups](#macos-package-groups)
+>     - [Managed files and conflicts](#managed-files-and-conflicts)
 >   - [Usage](#usage)
 >     - [Automated Setup with `install.sh`](#automated-setup-with-installsh)
 >     - [Configuring Dotfiles with Make](#configuring-dotfiles-with-make)

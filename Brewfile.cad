@@ -1,0 +1,8 @@
+brew "automake"
+brew "gperf"
+brew "meson"
+brew "poppler"
+
+cask "bambu-studio"
+cask "openscad@snapshot"
+

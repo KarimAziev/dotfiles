@@ -1,0 +1,6 @@
+pinentry-program @PINENTRY_PROGRAM@
+allow-emacs-pinentry
+allow-loopback-pinentry
+default-cache-ttl 604800
+max-cache-ttl 604800
+

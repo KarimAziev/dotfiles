@@ -1,0 +1,15 @@
+@mermaid-js/mermaid-cli
+@tailwindcss/language-server
+@vue/language-server
+bash-language-server
+corepack
+emacs-jsdom-run
+pnpm
+prettier
+prettier-plugin-sh
+pyright
+typescript
+typescript-language-server
+vscode-langservers-extracted
+yaml-language-server
+
