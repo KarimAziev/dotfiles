@@ -1,0 +1,197 @@
+name: macOS Installer CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "install-macos.sh"
+      - "Brewfile*"
+      - "modules/emacs-plus/**"
+      - "modules/gnupg/gpg-agent.macos.conf.in"
+      - "modules/karabiner/**"
+      - "modules/nvm/**"
+      - "modules/zsh/**"
+      - ".github/workflows/macos.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "install-macos.sh"
+      - "Brewfile*"
+      - "modules/emacs-plus/**"
+      - "modules/gnupg/gpg-agent.macos.conf.in"
+      - "modules/karabiner/**"
+      - "modules/nvm/**"
+      - "modules/zsh/**"
+      - ".github/workflows/macos.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-installer-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HOMEBREW_NO_ASK: "1"
+  HOMEBREW_NO_AUTO_UPDATE: "1"
+  HOMEBREW_NO_INSTALL_UPGRADE: "1"
+  HOMEBREW_NO_INSTALL_CLEANUP: "1"
+  HOMEBREW_NO_AUTOREMOVE: "1"
+  HOMEBREW_NO_ENV_HINTS: "1"
+  HOMEBREW_BUNDLE_NO_UPGRADE: "1"
+
+jobs:
+  validate:
+    name: Validate on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-15
+          - macos-15-intel
+
+    defaults:
+      run:
+        shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Show runner environment
+        run: |
+          sw_vers
+          uname -m
+          /bin/bash --version | head -n 1
+          brew --version | head -n 1
+
+      - name: Install ShellCheck without updating Homebrew
+        run: |
+          if ! command -v shellcheck >/dev/null 2>&1; then
+            brew install shellcheck
+          fi
+          shellcheck --version
+
+      - name: Validate shell and configuration syntax
+        run: |
+          /bin/bash -n install-macos.sh
+          shellcheck -x install-macos.sh
+          zsh -n modules/zsh/.zprofile
+          zsh -n modules/zsh/.zshrc
+          zsh -n modules/zsh/.zsh_aliases
+          ruby -rjson -e 'JSON.parse(File.read(ARGV.fetch(0)))' \
+            modules/karabiner/karabiner.json
+
+          for brewfile in \
+            Brewfile \
+            Brewfile.media \
+            Brewfile.cad \
+            Brewfile.ai \
+            Brewfile.desktop \
+            Brewfile.dropbox \
+            Brewfile.xcode; do
+            ruby -c "$brewfile" >/dev/null
+            brew bundle list --all --file="$brewfile" >/dev/null
+            echo "Validated $brewfile"
+          done
+
+      - name: Enforce Homebrew no-mutation policy
+        run: |
+          required_variables=(
+            HOMEBREW_NO_ASK
+            HOMEBREW_NO_AUTO_UPDATE
+            HOMEBREW_NO_INSTALL_UPGRADE
+            HOMEBREW_NO_INSTALL_CLEANUP
+            HOMEBREW_NO_AUTOREMOVE
+          )
+
+          for variable in "${required_variables[@]}"; do
+            grep -Fqx "export ${variable}=1" install-macos.sh
+            grep -Fqx "export ${variable}=1" modules/zsh/.zprofile
+            grep -Fqx "export ${variable}=1" modules/zsh/.zshrc
+          done
+
+          if grep -En \
+            'brew_run (cleanup|autoremove|upgrade)|bundle cleanup' \
+            install-macos.sh; then
+            echo "Forbidden automatic Homebrew mutation found" >&2
+            exit 1
+          fi
+
+          grep -Fq 'if [[ $BREW_UPDATE == true ]]; then' install-macos.sh
+          grep -Fq 'brew_run update' install-macos.sh
+
+          if grep -En 'emacs-plus|stolendata-mpv' Brewfile Brewfile.*; then
+            echo "Emacs or the deprecated mpv cask leaked into a Brewfile" >&2
+            exit 1
+          fi
+
+          grep -Fq 'cask "docker-desktop"' Brewfile
+          grep -Fq 'brew "ffmpeg"' Brewfile.media
+          grep -Fq 'brew "mpv"' Brewfile.media
+
+      - name: Validate command-line behavior
+        run: |
+          /bin/bash ./install-macos.sh --help >/dev/null
+
+          if /bin/bash ./install-macos.sh \
+            --dry-run --yes --profile nonsense \
+            >"$RUNNER_TEMP/invalid-profile.log" 2>&1; then
+            echo "Invalid profile unexpectedly succeeded" >&2
+            exit 1
+          fi
+          grep -Fq "Unknown profile 'nonsense'" "$RUNNER_TEMP/invalid-profile.log"
+
+          if /bin/bash ./install-macos.sh \
+            --dry-run --yes --only nonsense \
+            >"$RUNNER_TEMP/invalid-phase.log" 2>&1; then
+            echo "Invalid phase unexpectedly succeeded" >&2
+            exit 1
+          fi
+          grep -Fq "Unknown phase" "$RUNNER_TEMP/invalid-phase.log"
+
+      - name: Run complete profile dry-runs in an isolated home
+        run: |
+          isolated_home="$RUNNER_TEMP/install-macos-home"
+          mkdir -p "$isolated_home"
+
+          HOME="$isolated_home" /bin/bash ./install-macos.sh \
+            --dry-run \
+            --yes \
+            --profile developer \
+            >"$RUNNER_TEMP/developer-dry-run.log" 2>&1
+
+          HOME="$isolated_home" /bin/bash ./install-macos.sh \
+            --dry-run \
+            --yes \
+            --profile personal \
+            --skip-emacs \
+            --skip-dropbox \
+            >"$RUNNER_TEMP/personal-dry-run.log" 2>&1
+
+          grep -Fq "Dry-run complete; no requested mutations were executed." \
+            "$RUNNER_TEMP/developer-dry-run.log"
+          grep -Fq "emacs=false dropbox=false" \
+            "$RUNNER_TEMP/personal-dry-run.log"
+          grep -Fq "Dry-run complete; no requested mutations were executed." \
+            "$RUNNER_TEMP/personal-dry-run.log"
+
+          if find "$isolated_home" -mindepth 1 -print -quit | grep -q .; then
+            echo "Dry-run unexpectedly modified the isolated home:" >&2
+            find "$isolated_home" -mindepth 1 -print >&2
+            exit 1
+          fi
+
+      - name: Upload dry-run logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-dry-run-logs-${{ matrix.os }}
+          path: ${{ runner.temp }}/*-dry-run.log
+          if-no-files-found: ignore
+          retention-days: 7
