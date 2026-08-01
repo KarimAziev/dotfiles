@@ -13,13 +13,6 @@ declare -a steps=(init_git init_pkgs init_nvm init_google_chrome init_google_ses
 # Set default prompt option
 SKIP_PROMPT="no"
 
-# Check command line arguments for non-interactive flag
-for arg in "$@"; do
-  if [ "$arg" = "--non-interactive" ] || [ "$arg" = "-y" ]; then
-    SKIP_PROMPT="yes"
-  fi
-done
-
 bootstrap() {
   sudo apt-get update
   sudo apt-get install --assume-yes wget apt-transport-https curl gnupg software-properties-common
@@ -479,6 +472,14 @@ init_ghcup() {
   #   * GHCUP_BASE_URL - the base url for ghcup binary download (use this to overwrite https://downloads.haskell.org/~ghcup with a mirror)
   #   * GHCUP_MSYS2_ENV - the msys2 environment to use on windows, see https://www.msys2.org/docs/environments/ (defauts to MINGW64, MINGW32 or CLANGARM64, depending on the architecture)
 
+  if command -v ghcup > /dev/null 2>&1 \
+    && command -v ghc > /dev/null 2>&1 \
+    && command -v cabal > /dev/null 2>&1 \
+    && command -v haskell-language-server-wrapper > /dev/null 2>&1; then
+    echo "GHCup and the requested Haskell toolchain are already installed."
+    return 0
+  fi
+
   local pkgs
   # Get the Ubuntu version
   local ubuntu_version
@@ -502,10 +503,14 @@ init_ghcup() {
     echo "Unsupported version for this script."
   fi
   export BOOTSTRAP_HASKELL_NONINTERACTIVE=1
+  export BOOTSTRAP_HASKELL_NO_UPGRADE=1
   export BOOTSTRAP_HASKELL_GHC_VERSION=recommended
   export BOOTSTRAP_HASKELL_CABAL_VERSION=recommended
   export BOOTSTRAP_HASKELL_INSTALL_HLS=1
   export BOOTSTRAP_HASKELL_ADJUST_BASHRC=0
+  # GitHub-hosted runners may export a shared, root-owned /usr/local prefix.
+  # A bootstrap performed by this script must always belong to the target user.
+  export GHCUP_INSTALL_BASE_PREFIX="$HOME"
 
   echo "Installing GHCup, the Haskell toolchain installer..."
   curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
@@ -608,6 +613,8 @@ main() {
 
 init_docker() {
   # Detect the distribution
+  # This file exists on supported Linux systems.
+  # shellcheck disable=SC1091
   . /etc/os-release
 
   # Remove conflicting packages and ignore errors
@@ -685,21 +692,28 @@ show_help() {
   echo "Example: $(basename "$0") init_git init_nvm"
 }
 
-# Check command line arguments for "--help" or "-h", "--non-interactive" or "-y"
-for arg in "$@"; do
-  if [ "$arg" = "--help" ] || [ "$arg" = "-h" ]; then
-    show_help
-    exit 0
-  elif [ "$arg" = "--non-interactive" ] || [ "$arg" = "-y" ]; then
-    SKIP_PROMPT="yes"
-  fi
-done
+run_cli() {
+  local arg
+  for arg in "$@"; do
+    if [[ $arg == --help || $arg == -h ]]; then
+      show_help
+      return 0
+    elif [[ $arg == --non-interactive || $arg == -y ]]; then
+      SKIP_PROMPT=yes
+    fi
+  done
 
-args=("$@")
-for i in "${!args[@]}"; do
-  if [[ "${args[$i]}" = "--non-interactive" ]] || [[ "${args[$i]}" = "-y" ]]; then
-    unset 'args[i]'
-  fi
-done
+  local -a args=("$@")
+  local i
+  for i in "${!args[@]}"; do
+    if [[ ${args[$i]} == --non-interactive || ${args[$i]} == -y ]]; then
+      unset 'args[i]'
+    fi
+  done
 
-main "${args[@]}"
+  main "${args[@]}"
+}
+
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+  run_cli "$@"
+fi

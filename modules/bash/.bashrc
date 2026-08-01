@@ -117,7 +117,8 @@ export SDKMAN_DIR="$HOME/.sdkman"
 # shellcheck disable=SC1090,SC1091
 [[ -s "$SDKMAN_DIR/bin/sdkman-init.sh" ]] && source "$SDKMAN_DIR/bin/sdkman-init.sh"
 
-[ -f "/home/km/.ghcup/env" ] && . "/home/km/.ghcup/env" # ghcup-env
+# shellcheck disable=SC1091
+[ -f "$HOME/.ghcup/env" ] && . "$HOME/.ghcup/env" # ghcup-env
 
 # Export PATH environment variable - added by script
 export PATH

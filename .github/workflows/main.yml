@@ -8,21 +8,24 @@ on:
 
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
-    # Runs a single command using the runners shell
-    - name: Run install script
-      run: |
-        chmod +x ./install.sh
-        ./install.sh --non-interactive
+      - name: Run install script
+        run: |
+          chmod +x ./install.sh
+          ./install.sh --non-interactive
 
-    # Example: Running a make command
-    - name: Apply dotfiles configurations
-      run: make install
+      - name: Apply dotfiles configurations
+        run: make install
