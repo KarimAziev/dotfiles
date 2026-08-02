@@ -52,6 +52,7 @@ jobs:
         os:
           - macos-15
           - macos-15-intel
+          - macos-latest
 
     defaults:
       run:
